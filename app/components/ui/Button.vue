@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { colors, spacing, borderRadius, shadows, transitions } from '../../styles/design-tokens'
+import { useThemeStore } from '../../stores/theme'
 
 interface Props {
   variant?: 'primary' | 'secondary' | 'accent' | 'ghost' | 'danger'
@@ -21,153 +21,60 @@ const emit = defineEmits<{
   click: [event: MouseEvent]
 }>()
 
+const themeStore = useThemeStore()
+
 const handleClick = (event: MouseEvent) => {
   if (!props.disabled && !props.loading) {
     emit('click', event)
   }
+}
+
+const sizeClasses = {
+  sm: 'px-3 py-1.5 text-sm rounded min-h-[2rem]',
+  md: 'px-4 py-2 text-base rounded-md min-h-[2.5rem]',
+  lg: 'px-6 py-3 text-lg rounded-lg min-h-[3rem]'
 }
 </script>
 
 <template>
   <button
     :class="[
-      'btn',
-      `btn-${variant}`,
-      `btn-${size}`,
-      { 'btn-full': fullWidth, 'btn-disabled': disabled || loading }
+      'inline-flex items-center justify-center font-medium transition-all duration-200 border-2 cursor-pointer select-none',
+      sizeClasses[size],
+      fullWidth ? 'w-full' : '',
+      (disabled || loading) ? 'opacity-50 cursor-not-allowed pointer-events-none' : 'hover:-translate-y-0.5'
     ]"
+    :style="{
+      backgroundColor: variant === 'primary' ? themeStore.colors.accentPrimary :
+                      variant === 'secondary' ? themeStore.colors.bgPrimary :
+                      variant === 'accent' ? themeStore.colors.accentGold :
+                      variant === 'danger' ? themeStore.colors.error :
+                      'transparent',
+      color: variant === 'ghost' ? themeStore.colors.textPrimary :
+             variant === 'secondary' ? themeStore.colors.textPrimary :
+             themeStore.colors.textInverse,
+      borderColor: variant === 'primary' ? themeStore.colors.accentPrimary :
+                   variant === 'secondary' ? themeStore.colors.borderPrimary :
+                   variant === 'accent' ? themeStore.colors.accentGold :
+                   variant === 'danger' ? themeStore.colors.error :
+                   'transparent'
+    }"
     :disabled="disabled || loading"
     @click="handleClick"
   >
-    <span v-if="loading" class="btn-spinner"></span>
+    <span v-if="loading" class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
     <slot v-else />
   </button>
 </template>
 
 <style scoped>
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 500;
-  transition: all v-bind('transitions.base');
-  border: 2px solid transparent;
-  cursor: pointer;
-  white-space: nowrap;
-  user-select: none;
+/* Minimal custom styles */
+button:hover:not([disabled]) {
+  filter: brightness(1.1);
 }
 
-.btn:focus {
+button:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(127, 29, 29, 0.2);
-}
-
-/* Sizes */
-.btn-sm {
-  padding: 0.375rem 0.75rem;
-  font-size: 0.875rem;
-  border-radius: v-bind('borderRadius.base');
-  min-height: 2rem;
-}
-
-.btn-md {
-  padding: 0.5rem 1rem;
-  font-size: 1rem;
-  border-radius: v-bind('borderRadius.md');
-  min-height: 2.5rem;
-}
-
-.btn-lg {
-  padding: 0.75rem 1.5rem;
-  font-size: 1.125rem;
-  border-radius: v-bind('borderRadius.lg');
-  min-height: 3rem;
-}
-
-/* Variants */
-.btn-primary {
-  background-color: v-bind('colors.primary[900]');
-  color: v-bind('colors.text.inverse');
-  border-color: v-bind('colors.primary[900]');
-}
-
-.btn-primary:hover:not(.btn-disabled) {
-  background-color: v-bind('colors.primary[800]');
-  border-color: v-bind('colors.primary[800]');
-  transform: translateY(-1px);
-  box-shadow: v-bind('shadows.md');
-}
-
-.btn-secondary {
-  background-color: v-bind('colors.bg.primary');
-  color: v-bind('colors.primary[900]');
-  border-color: v-bind('colors.border.dark');
-}
-
-.btn-secondary:hover:not(.btn-disabled) {
-  background-color: v-bind('colors.bg.secondary');
-  transform: translateY(-1px);
-  box-shadow: v-bind('shadows.base');
-}
-
-.btn-accent {
-  background-color: v-bind('colors.accent[900]');
-  color: v-bind('colors.text.inverse');
-  border-color: v-bind('colors.accent[900]');
-}
-
-.btn-accent:hover:not(.btn-disabled) {
-  background-color: v-bind('colors.accent[800]');
-  border-color: v-bind('colors.accent[800]');
-  transform: translateY(-1px);
-  box-shadow: v-bind('shadows.md');
-}
-
-.btn-ghost {
-  background-color: transparent;
-  color: v-bind('colors.text.primary');
-  border-color: transparent;
-}
-
-.btn-ghost:hover:not(.btn-disabled) {
-  background-color: v-bind('colors.bg.secondary');
-}
-
-.btn-danger {
-  background-color: v-bind('colors.error');
-  color: v-bind('colors.text.inverse');
-  border-color: v-bind('colors.error');
-}
-
-.btn-danger:hover:not(.btn-disabled) {
-  background-color: #dc2626;
-  border-color: #dc2626;
-  transform: translateY(-1px);
-  box-shadow: v-bind('shadows.md');
-}
-
-/* States */
-.btn-disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-.btn-full {
-  width: 100%;
-}
-
-/* Loading spinner */
-.btn-spinner {
-  width: 1rem;
-  height: 1rem;
-  border: 2px solid currentColor;
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.3);
 }
 </style>

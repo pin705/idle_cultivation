@@ -1,23 +1,27 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { usePlayerStore } from '../stores/player'
-import { colors, spacing, shadows, breakpoints } from '../styles/design-tokens'
+import { useThemeStore } from '../stores/theme'
 import { REALMS, getSectRank } from '../../shared/constants'
+import { ICONS, UI_TEXT } from '../../shared/ui-constants'
 import Tabs from './ui/Tabs.vue'
+import SettingsModal from './SettingsModal.vue'
 
 const player = usePlayerStore()
+const themeStore = useThemeStore()
 const currentTab = ref('cultivation')
 const sidebarOpen = ref(true)
+const showSettings = ref(false)
 
 const tabs = [
-  { id: 'cultivation', label: 'Tu Luyện', icon: '⚡' },
-  { id: 'equipment', label: 'Trang Bị', icon: '⚔️' },
-  { id: 'techniques', label: 'Kỹ Thuật', icon: '📜' },
-  { id: 'sect', label: 'Tông Môn', icon: '🏛️' },
-  { id: 'missions', label: 'Nhiệm Vụ', icon: '📋' },
-  { id: 'shop', label: 'Cửa Hàng', icon: '🏪' },
-  { id: 'achievements', label: 'Thành Tựu', icon: '🏆' },
-  { id: 'ascension', label: 'Thăng Thiên', icon: '✨' }
+  { id: 'cultivation', label: UI_TEXT.cultivation, icon: ICONS.cultivation },
+  { id: 'equipment', label: UI_TEXT.equipment, icon: ICONS.equipment },
+  { id: 'techniques', label: UI_TEXT.techniques, icon: ICONS.techniques },
+  { id: 'sect', label: UI_TEXT.sect, icon: ICONS.sect },
+  { id: 'missions', label: UI_TEXT.missions, icon: ICONS.missions },
+  { id: 'shop', label: UI_TEXT.shop, icon: ICONS.shop },
+  { id: 'achievements', label: UI_TEXT.achievements, icon: ICONS.achievements },
+  { id: 'ascension', label: UI_TEXT.ascension, icon: ICONS.ascension }
 ]
 
 const realmProgress = computed(() => {
@@ -33,104 +37,241 @@ const currentSectRank = computed(() => {
 })
 
 const qiRate = computed(() => {
-  // Simplified - actual calculation in server
   return player.player?.cultivation?.baseRate || 0
 })
 
 const toggleSidebar = () => {
   sidebarOpen.value = !sidebarOpen.value
 }
+
+const openSettings = () => {
+  showSettings.value = true
+}
+
+const closeSettings = () => {
+  showSettings.value = false
+}
+
+function getSlotIcon(slot: string): string {
+  const icons: Record<string, string> = {
+    weapon: ICONS.weapon,
+    armor: ICONS.armor,
+    helmet: ICONS.helmet,
+    boots: ICONS.boots,
+    accessory: ICONS.accessory,
+    talisman: ICONS.talisman
+  }
+  return icons[slot] || '?'
+}
 </script>
 
 <template>
-  <div class="main-layout">
+  <div class="flex min-h-screen font-serif"
+       :style="{ backgroundColor: themeStore.colors.bgSecondary }">
+    
     <!-- Sidebar -->
-    <aside :class="['sidebar', { 'sidebar-collapsed': !sidebarOpen }]">
+    <aside 
+      :class="[
+        'w-80 border-r-2 overflow-y-auto transition-all duration-300 relative flex-shrink-0',
+        'lg:relative lg:translate-x-0',
+        sidebarOpen ? 'translate-x-0 fixed inset-y-0 left-0 z-50' : '-translate-x-full lg:w-16'
+      ]"
+      :style="{ 
+        backgroundColor: themeStore.colors.bgPaper,
+        borderColor: themeStore.colors.borderPrimary 
+      }">
+      
       <!-- Toggle Button -->
-      <button class="sidebar-toggle" @click="toggleSidebar">
-        <span v-if="sidebarOpen">←</span>
-        <span v-else">→</span>
+      <button 
+        class="absolute -right-4 top-4 w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold z-10 hover:scale-110 transition-transform"
+        :style="{
+          backgroundColor: themeStore.colors.accentPrimary,
+          color: themeStore.colors.textInverse,
+          borderColor: themeStore.colors.borderPrimary
+        }"
+        @click="toggleSidebar">
+        <span>{{ sidebarOpen ? '←' : '→' }}</span>
       </button>
 
-      <div v-if="sidebarOpen" class="sidebar-content">
+      <div v-if="sidebarOpen" class="p-6">
         <!-- Player Avatar & Name -->
-        <div class="player-header">
-          <div class="player-avatar">
+        <div class="flex items-center gap-4 mb-8 pb-4 border-b-2"
+             :style="{ borderColor: themeStore.colors.borderPrimary }">
+          <div 
+            class="w-16 h-16 rounded-full border-3 flex items-center justify-center text-3xl font-bold cursor-pointer relative group hover:scale-105 transition-transform"
+            :style="{
+              backgroundColor: themeStore.colors.accentPrimary,
+              color: themeStore.colors.textInverse,
+              borderColor: themeStore.colors.borderPrimary
+            }"
+            @click="openSettings">
             {{ player.player?.name?.[0] || '?' }}
+            <div class="absolute inset-0 rounded-full bg-black/70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <span class="text-2xl">{{ ICONS.settings }}</span>
+            </div>
           </div>
-          <div class="player-info">
-            <div class="player-name">{{ player.player?.name || 'Tu Sĩ' }}</div>
-            <div v-if="player.player?.activeTitle" class="player-title">{{ player.player.activeTitle }}</div>
+          <div class="flex-1">
+            <div class="text-xl font-bold mb-1"
+                 :style="{ color: themeStore.colors.textPrimary }">
+              {{ player.player?.name || UI_TEXT.player }}
+            </div>
+            <div v-if="player.player?.activeTitle" 
+                 class="text-sm font-semibold"
+                 :style="{ color: themeStore.colors.accentGold }">
+              {{ player.player.activeTitle }}
+            </div>
           </div>
         </div>
 
         <!-- Realm Progress -->
-        <div class="stat-section">
-          <div class="stat-label">Cảnh Giới</div>
-          <div class="stat-value realm-value">
+        <div class="mb-6 pb-4 border-b"
+             :style="{ borderColor: themeStore.colors.borderSecondary }">
+          <div class="text-xs font-semibold uppercase tracking-wide mb-2"
+               :style="{ color: themeStore.colors.textSecondary }">
+            {{ UI_TEXT.realm }}
+          </div>
+          <div class="text-2xl font-bold mb-1 flex items-baseline gap-2"
+               :style="{ color: themeStore.colors.textPrimary }">
             {{ player.player?.realm?.major || 'Luyện Khí' }}
-            <span class="realm-minor">Tầng {{ player.player?.realm?.minor || 1 }}</span>
+            <span class="text-sm"
+                  :style="{ color: themeStore.colors.textSecondary }">
+              Tầng {{ player.player?.realm?.minor || 1 }}
+            </span>
           </div>
-          <div class="progress-bar">
-            <div class="progress-fill" :style="{ width: realmProgress + '%' }"></div>
+          <div class="h-2 rounded-full border overflow-hidden my-2"
+               :style="{ 
+                 backgroundColor: themeStore.colors.bgTertiary,
+                 borderColor: themeStore.colors.borderPrimary 
+               }">
+            <div class="h-full transition-all duration-300"
+                 :style="{ 
+                   width: realmProgress + '%',
+                   backgroundColor: themeStore.colors.accentPrimary 
+                 }"></div>
           </div>
-          <div class="stat-detail">{{ player.player?.realm?.progress || 0 }} / {{ player.player?.realm?.maxProgress || 100 }}</div>
+          <div class="text-sm"
+               :style="{ color: themeStore.colors.textSecondary }">
+            {{ player.player?.realm?.progress || 0 }} / {{ player.player?.realm?.maxProgress || 100 }}
+          </div>
         </div>
 
         <!-- Qi -->
-        <div class="stat-section">
-          <div class="stat-label">Linh Khí</div>
-          <div class="stat-value">{{ Math.floor(player.player?.attributes?.qi || 0).toLocaleString() }}</div>
-          <div class="stat-detail">+{{ qiRate.toFixed(1) }}/giây</div>
+        <div class="mb-6 pb-4 border-b"
+             :style="{ borderColor: themeStore.colors.borderSecondary }">
+          <div class="text-xs font-semibold uppercase tracking-wide mb-2"
+               :style="{ color: themeStore.colors.textSecondary }">
+            {{ UI_TEXT.qi }}
+          </div>
+          <div class="text-2xl font-bold font-mono mb-1"
+               :style="{ color: themeStore.colors.textPrimary }">
+            {{ Math.floor(player.player?.attributes?.qi || 0).toLocaleString() }}
+          </div>
+          <div class="text-sm"
+               :style="{ color: themeStore.colors.textSecondary }">
+            +{{ qiRate.toFixed(1) }}/giây
+          </div>
         </div>
 
         <!-- Resources -->
-        <div class="stat-section">
-          <div class="stat-label">Tài Nguyên</div>
-          <div class="resource-grid">
-            <div class="resource-item">
-              <span class="resource-icon">💎</span>
-              <span class="resource-amount">{{ (player.player?.resources?.spiritStones || 0).toLocaleString() }}</span>
+        <div class="mb-6 pb-4 border-b"
+             :style="{ borderColor: themeStore.colors.borderSecondary }">
+          <div class="text-xs font-semibold uppercase tracking-wide mb-2"
+               :style="{ color: themeStore.colors.textSecondary }">
+            {{ UI_TEXT.resources }}
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="flex items-center gap-2 p-2 rounded border"
+                 :style="{ 
+                   backgroundColor: themeStore.colors.bgSecondary,
+                   borderColor: themeStore.colors.borderSecondary 
+                 }">
+              <span class="text-xl">{{ ICONS.spiritStones }}</span>
+              <span class="font-semibold font-mono text-sm"
+                    :style="{ color: themeStore.colors.textPrimary }">
+                {{ (player.player?.resources?.spiritStones || 0).toLocaleString() }}
+              </span>
             </div>
-            <div class="resource-item">
-              <span class="resource-icon">🌿</span>
-              <span class="resource-amount">{{ (player.player?.resources?.herbs || 0).toLocaleString() }}</span>
+            <div class="flex items-center gap-2 p-2 rounded border"
+                 :style="{ 
+                   backgroundColor: themeStore.colors.bgSecondary,
+                   borderColor: themeStore.colors.borderSecondary 
+                 }">
+              <span class="text-xl">{{ ICONS.herbs }}</span>
+              <span class="font-semibold font-mono text-sm"
+                    :style="{ color: themeStore.colors.textPrimary }">
+                {{ (player.player?.resources?.herbs || 0).toLocaleString() }}
+              </span>
             </div>
           </div>
         </div>
 
         <!-- Stats -->
-        <div class="stat-section">
-          <div class="stat-label">Thuộc Tính</div>
-          <div class="stats-grid">
-            <div class="stat-row">
-              <span class="stat-name">Thể Chất:</span>
-              <span class="stat-num">{{ player.player?.attributes?.body || 10 }}</span>
+        <div class="mb-6 pb-4 border-b"
+             :style="{ borderColor: themeStore.colors.borderSecondary }">
+          <div class="text-xs font-semibold uppercase tracking-wide mb-2"
+               :style="{ color: themeStore.colors.textSecondary }">
+            {{ UI_TEXT.attributes }}
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <div class="flex justify-between text-sm">
+              <span :style="{ color: themeStore.colors.textSecondary }">{{ UI_TEXT.body }}:</span>
+              <span class="font-semibold font-mono"
+                    :style="{ color: themeStore.colors.textPrimary }">
+                {{ player.player?.attributes?.body || 10 }}
+              </span>
             </div>
-            <div class="stat-row">
-              <span class="stat-name">Thần Thức:</span>
-              <span class="stat-num">{{ player.player?.attributes?.spirit || 10 }}</span>
+            <div class="flex justify-between text-sm">
+              <span :style="{ color: themeStore.colors.textSecondary }">{{ UI_TEXT.spirit }}:</span>
+              <span class="font-semibold font-mono"
+                    :style="{ color: themeStore.colors.textPrimary }">
+                {{ player.player?.attributes?.spirit || 10 }}
+              </span>
             </div>
-            <div class="stat-row">
-              <span class="stat-name">Thiên Phú:</span>
-              <span class="stat-num">{{ player.player?.attributes?.talent || 5 }}</span>
+            <div class="flex justify-between text-sm">
+              <span :style="{ color: themeStore.colors.textSecondary }">{{ UI_TEXT.talent }}:</span>
+              <span class="font-semibold font-mono"
+                    :style="{ color: themeStore.colors.textPrimary }">
+                {{ player.player?.attributes?.talent || 5 }}
+              </span>
             </div>
           </div>
         </div>
 
         <!-- Sect Info -->
-        <div v-if="player.player?.sect?.id" class="stat-section">
-          <div class="stat-label">Tông Môn</div>
-          <div v-if="currentSectRank" class="sect-rank">{{ currentSectRank.name }}</div>
-          <div class="stat-detail">Công Hiến: {{ player.player?.sect?.contribution || 0 }}</div>
+        <div v-if="player.player?.sect?.id" class="mb-6 pb-4 border-b"
+             :style="{ borderColor: themeStore.colors.borderSecondary }">
+          <div class="text-xs font-semibold uppercase tracking-wide mb-2"
+               :style="{ color: themeStore.colors.textSecondary }">
+            Tông Môn
+          </div>
+          <div v-if="currentSectRank" 
+               class="text-lg font-semibold mb-1"
+               :style="{ color: themeStore.colors.accentGold }">
+            {{ currentSectRank.name }}
+          </div>
+          <div class="text-sm"
+               :style="{ color: themeStore.colors.textSecondary }">
+            Công Hiến: {{ player.player?.sect?.contribution || 0 }}
+          </div>
         </div>
 
         <!-- Equipment Preview -->
-        <div class="stat-section">
-          <div class="stat-label">Trang Bị</div>
-          <div class="equipment-preview">
-            <div v-for="slot in ['weapon', 'armor', 'helmet', 'boots', 'accessory', 'talisman']" :key="slot" class="equipment-slot">
-              <span class="slot-icon">{{ getSlotIcon(slot) }}</span>
+        <div class="mb-4">
+          <div class="text-xs font-semibold uppercase tracking-wide mb-2"
+               :style="{ color: themeStore.colors.textSecondary }">
+            Trang Bị
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <div 
+              v-for="slot in ['weapon', 'armor', 'helmet', 'boots', 'accessory', 'talisman']" 
+              :key="slot" 
+              class="aspect-square flex items-center justify-center text-2xl font-bold rounded-lg border-2"
+              :style="{ 
+                backgroundColor: themeStore.colors.bgSecondary,
+                borderColor: themeStore.colors.borderPrimary,
+                color: themeStore.colors.textPrimary
+              }">
+              <span>{{ getSlotIcon(slot) }}</span>
             </div>
           </div>
         </div>
@@ -138,294 +279,33 @@ const toggleSidebar = () => {
     </aside>
 
     <!-- Main Content Area -->
-    <div class="content-area">
+    <div class="flex-1 flex flex-col overflow-hidden">
       <!-- Top Navigation Tabs -->
-      <div class="content-header">
+      <div class="border-b-2 sticky top-0 z-10"
+           :style="{ 
+             backgroundColor: themeStore.colors.bgPaper,
+             borderColor: themeStore.colors.borderPrimary 
+           }">
         <Tabs v-model="currentTab" :tabs="tabs" />
       </div>
 
       <!-- Tab Content -->
-      <div class="content-body">
+      <div class="flex-1 overflow-y-auto p-8 lg:p-12">
         <slot :current-tab="currentTab" />
       </div>
     </div>
+
+    <!-- Settings Modal -->
+    <SettingsModal :show="showSettings" @close="closeSettings" />
+    
+    <!-- Mobile overlay -->
+    <div 
+      v-if="sidebarOpen" 
+      class="fixed inset-0 bg-black/50 z-40 lg:hidden"
+      @click="toggleSidebar"></div>
   </div>
 </template>
 
-<script lang="ts">
-function getSlotIcon(slot: string): string {
-  const icons: Record<string, string> = {
-    weapon: '⚔️',
-    armor: '🛡️',
-    helmet: '👑',
-    boots: '👢',
-    accessory: '💍',
-    talisman: '📿'
-  }
-  return icons[slot] || '❓'
-}
-</script>
-
 <style scoped>
-.main-layout {
-  display: flex;
-  min-height: 100vh;
-  background-color: v-bind('colors.bg.secondary');
-}
-
-/* Sidebar */
-.sidebar {
-  width: 320px;
-  background-color: v-bind('colors.bg.paper');
-  border-right: 2px solid v-bind('colors.border.dark');
-  overflow-y: auto;
-  transition: width 300ms ease;
-  position: relative;
-  flex-shrink: 0;
-}
-
-.sidebar-collapsed {
-  width: 60px;
-}
-
-.sidebar-toggle {
-  position: absolute;
-  top: 1rem;
-  right: -1rem;
-  width: 2rem;
-  height: 2rem;
-  background-color: v-bind('colors.accent[900]');
-  color: white;
-  border: 2px solid v-bind('colors.border.dark');
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 10;
-  box-shadow: v-bind('shadows.md');
-}
-
-.sidebar-toggle:hover {
-  background-color: v-bind('colors.accent[800]');
-}
-
-.sidebar-content {
-  padding: v-bind('spacing.lg');
-}
-
-/* Player Header */
-.player-header {
-  display: flex;
-  align-items: center;
-  gap: v-bind('spacing.md');
-  margin-bottom: v-bind('spacing.xl');
-  padding-bottom: v-bind('spacing.md');
-  border-bottom: 2px solid v-bind('colors.border.dark');
-}
-
-.player-avatar {
-  width: 64px;
-  height: 64px;
-  background: linear-gradient(135deg, v-bind('colors.accent[900]'), v-bind('colors.accent[700]'));
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2rem;
-  font-weight: bold;
-  border-radius: 50%;
-  border: 3px solid v-bind('colors.border.dark');
-  box-shadow: v-bind('shadows.lg');
-}
-
-.player-info {
-  flex: 1;
-}
-
-.player-name {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: v-bind('colors.text.primary');
-  margin-bottom: 0.25rem;
-}
-
-.player-title {
-  font-size: 0.875rem;
-  color: v-bind('colors.accent[900]');
-  font-weight: 600;
-}
-
-/* Stat Sections */
-.stat-section {
-  margin-bottom: v-bind('spacing.lg');
-  padding-bottom: v-bind('spacing.md');
-  border-bottom: 1px solid v-bind('colors.border.light');
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: v-bind('colors.text.secondary');
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.5rem;
-}
-
-.stat-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: v-bind('colors.text.primary');
-  font-family: monospace;
-  margin-bottom: 0.25rem;
-}
-
-.realm-value {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-}
-
-.realm-minor {
-  font-size: 0.875rem;
-  color: v-bind('colors.text.secondary');
-}
-
-.stat-detail {
-  font-size: 0.875rem;
-  color: v-bind('colors.text.secondary');
-}
-
-/* Progress Bar */
-.progress-bar {
-  height: 8px;
-  background-color: v-bind('colors.bg.tertiary');
-  border: 1px solid v-bind('colors.border.dark');
-  border-radius: 999px;
-  overflow: hidden;
-  margin: 0.5rem 0;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, v-bind('colors.accent[900]'), v-bind('colors.accent[700]'));
-  transition: width 300ms ease;
-}
-
-/* Resources */
-.resource-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
-}
-
-.resource-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  background-color: v-bind('colors.bg.secondary');
-  border: 1px solid v-bind('colors.border.light');
-  border-radius: 0.375rem;
-}
-
-.resource-icon {
-  font-size: 1.25rem;
-}
-
-.resource-amount {
-  font-weight: 600;
-  font-family: monospace;
-  font-size: 0.875rem;
-}
-
-/* Stats Grid */
-.stats-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.375rem;
-}
-
-.stat-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.875rem;
-}
-
-.stat-name {
-  color: v-bind('colors.text.secondary');
-}
-
-.stat-num {
-  font-weight: 600;
-  font-family: monospace;
-}
-
-/* Sect */
-.sect-rank {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: v-bind('colors.accent[900]');
-  margin-bottom: 0.25rem;
-}
-
-/* Equipment Preview */
-.equipment-preview {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
-}
-
-.equipment-slot {
-  aspect-ratio: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: v-bind('colors.bg.secondary');
-  border: 2px solid v-bind('colors.border.dark');
-  border-radius: 0.5rem;
-  font-size: 1.5rem;
-}
-
-/* Content Area */
-.content-area {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.content-header {
-  background-color: v-bind('colors.bg.paper');
-  border-bottom: 2px solid v-bind('colors.border.dark');
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.content-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: v-bind('spacing.xl');
-}
-
-/* Responsive */
-@media (max-width: 1024px) {
-  .sidebar {
-    position: fixed;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    z-index: 100;
-    transform: translateX(0);
-  }
-  
-  .sidebar-collapsed {
-    transform: translateX(-100%);
-  }
-  
-  .content-area {
-    width: 100%;
-  }
-}
+/* Minimal custom styles - most styling via Tailwind */
 </style>
