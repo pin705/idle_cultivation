@@ -2,14 +2,14 @@
 import { ref, computed } from 'vue'
 import { usePlayerStore } from '../../stores/player'
 import { useApiAction } from '../../composables/useApiAction'
-import { useThemeStore } from '../../stores/theme'
+import { useThemeColors } from '../../composables/useThemeColors'
 import { SET_BONUS, calcEquipmentBonus, calcEnhancementCost, calcEnhancementSuccessRate, getEquipmentSellPrice } from '../../../shared/constants'
 import Card from '../ui/Card.vue'
 import Button from '../ui/Button.vue'
 import Divider from '../ui/Divider.vue'
 
 const player = usePlayerStore()
-const themeStore = useThemeStore()
+const { getElementColorClass, getTierColorClass, getTierBgClass, getTierBorderClass } = useThemeColors()
 const { call } = useApiAction()
 const loading = ref(false)
 const selectedSlot = ref<string | null>(null)
@@ -102,14 +102,6 @@ async function sellItem(uid: string) {
   } finally {
     loading.value = false
   }
-}
-
-function getTierColor(tier: string): string {
-  return colors.tier[tier as keyof typeof colors.tier] || colors.tier.common
-}
-
-function getElementColor(element: string): string {
-  return colors.element[element as keyof typeof colors.element] || colors.element.neutral
 }
 </script>
 

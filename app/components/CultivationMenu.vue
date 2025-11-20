@@ -21,7 +21,6 @@ const showCrafting = ref(false)
 const showTribulation = ref(false)
 const showSect = ref(false)
 const showMissions = ref(false)
-const showSecretRealms = ref(false)
 
 const secretRealmsRef = ref<InstanceType<typeof SecretRealmsModal> | null>(null)
 const ascensionRef = ref<InstanceType<typeof AscensionModal> | null>(null)
@@ -38,10 +37,10 @@ const openAscension = () => {
 <template>
   <div>
     <div class="flex flex-wrap gap-2 pb-2 pt-2">
-              <button @click="openSecretRealms" class="relative flex items-center gap-1.5 rounded-lg bg-black/40 px-3 py-1.5 text-xs font-semibold text-white shadow-md transition-colors duration-200 hover:border-yellow-400/50 hover:bg-gray-700 hover:text-white">
+      <button @click="openSecretRealms" class="btn-gold px-3 py-1.5 text-xs font-semibold">
         Mật Cảnh
       </button>
-      <button @click="openAscension" class="relative flex items-center gap-1.5 rounded-lg bg-black/40 px-3 py-1.5 text-xs font-semibold text-white shadow-md transition-colors duration-200 hover:border-yellow-400/50 hover:bg-gray-700 hover:text-white">
+      <button @click="openAscension" class="btn-seal px-3 py-1.5 text-xs font-semibold">
         Thăng Thiên
       </button>
     </div>
@@ -49,31 +48,31 @@ const openAscension = () => {
     <AscensionModal ref="ascensionRef" />
 
     <div class="flex flex-wrap gap-2 pb-2 pt-2">
-      <button @click="showCharacter = true" class="relative mx-1 flex h-9 w-9 items-center justify-center rounded-full border border-black/40 font-semibold italic text-[10px] transition-colors">
+      <button @click="showCharacter = true" class="relative mx-1 flex h-9 w-9 items-center justify-center border-2 border-ink font-semibold text-[10px] text-ink hover:bg-ink hover:text-paper transition-all">
         Nhân Vật
       </button>
-      <button @click="showInventory = true" class="relative mx-1 flex h-9 w-9 items-center justify-center rounded-full border border-black/40 font-semibold italic text-[10px] transition-colors">
+      <button @click="showInventory = true" class="relative mx-1 flex h-9 w-9 items-center justify-center border-2 border-ink font-semibold text-[10px] text-ink hover:bg-ink hover:text-paper transition-all">
         Túi Đồ
       </button>
-      <button @click="showTechnique = true" class="relative mx-1 flex h-9 w-9 items-center justify-center rounded-full border border-black/40 font-semibold italic text-[10px] transition-colors">
+      <button @click="showTechnique = true" class="relative mx-1 flex h-9 w-9 items-center justify-center border-2 border-ink font-semibold text-[10px] text-ink hover:bg-ink hover:text-paper transition-all">
         Công Pháp
       </button>
-      <button @click="showEquipment = true" class="relative mx-1 flex h-9 w-9 items-center justify-center rounded-full border border-black/40 font-semibold italic text-[10px] transition-colors">
+      <button @click="showEquipment = true" class="relative mx-1 flex h-9 w-9 items-center justify-center border-2 border-ink font-semibold text-[10px] text-ink hover:bg-ink hover:text-paper transition-all">
         Trang Bị
       </button>
-      <button @click="showShop = true" class="relative mx-1 flex h-9 w-9 items-center justify-center rounded-full border border-black/40 font-semibold italic text-[10px] transition-colors">
+      <button @click="showShop = true" class="relative mx-1 flex h-9 w-9 items-center justify-center border-2 border-ink font-semibold text-[10px] text-ink hover:bg-ink hover:text-paper transition-all">
         Cửa Hàng
       </button>
-      <button @click="showCrafting = true" class="relative mx-1 flex h-9 w-9 items-center justify-center rounded-full border border-black/40 font-semibold italic text-[10px] transition-colors">
+      <button @click="showCrafting = true" class="relative mx-1 flex h-9 w-9 items-center justify-center border-2 border-ink font-semibold text-[10px] text-ink hover:bg-ink hover:text-paper transition-all">
         Chế Tạo
       </button>
-      <button @click="showTribulation = true" class="relative mx-1 flex h-9 w-9 items-center justify-center rounded-full border border-black/40 font-semibold italic text-[10px] transition-colors">
+      <button @click="showTribulation = true" class="relative mx-1 flex h-9 w-9 items-center justify-center border-2 border-ink font-semibold text-[10px] text-ink hover:bg-ink hover:text-paper transition-all">
         Thiên Kiếp
       </button>
-      <button @click="showSect = true" class="relative mx-1 flex h-9 w-9 items-center justify-center rounded-full border border-black/40 font-semibold italic text-[10px] transition-colors">
+      <button @click="showSect = true" class="relative mx-1 flex h-9 w-9 items-center justify-center border-2 border-ink font-semibold text-[10px] text-ink hover:bg-ink hover:text-paper transition-all">
         Tông Môn
       </button>
-      <button @click="showMissions = true" class="relative mx-1 flex h-9 w-9 items-center justify-center rounded-full border border-black/40 font-semibold italic text-[10px] transition-colors">
+      <button @click="showMissions = true" class="relative mx-1 flex h-9 w-9 items-center justify-center border-2 border-ink font-semibold text-[10px] text-ink hover:bg-ink hover:text-paper transition-all">
         Nhiệm Vụ
       </button>
     </div>

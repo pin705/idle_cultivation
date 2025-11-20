@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { usePlayerStore } from '../../stores/player'
 import { useApiAction } from '../../composables/useApiAction'
+import { useThemeColors } from '../../composables/useThemeColors'
 import { REALMS, TECHNIQUES, WORLD_CYCLES } from '../../../shared/constants'
 import Card from '../ui/Card.vue'
 import Button from '../ui/Button.vue'
 import Divider from '../ui/Divider.vue'
-import { useThemeStore } from '../../stores/theme'
 
 const player = usePlayerStore()
-const { colors } = useThemeStore()
 const { call } = useApiAction()
+const { getElementColorClass, getElementName } = useThemeColors()
 const loading = ref(false)
 
 const activeTechnique = computed(() => {
@@ -89,109 +89,112 @@ async function condenseQi() {
 const logs = computed(() => {
   return (player?.logs || []).slice(-10).reverse()
 })
+
+function getSectBonus() {
+  return 0 // Placeholder
+}
 </script>
 
 <template>
-  <div class="cultivation-tab">
-    <div class="cultivation-grid">
+  <div class="max-w-7xl mx-auto">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Left Column -->
-      <div class="cultivation-col">
+      <div class="flex flex-col gap-4">
         <!-- Realm Progress -->
         <Card title="Tu Vi Cảnh Giới" shadow>
-          <div class="realm-timeline">
-            <div v-for="(realm, index) in realmTimeline" :id="realm.name" class="realm-step">
-              <div :class="['realm-marker', { 
-                'realm-completed': realm.completed, 
-                'realm-current': realm.current,
-                'realm-locked': realm.locked 
-              }]">
+          <div class="flex justify-between items-center py-4">
+            <div v-for="(realm, index) in realmTimeline" :key="realm.name" class="relative flex flex-col items-center gap-2 flex-1">
+              <div :class="[
+                'w-12 h-12 border-2 flex items-center justify-center font-bold z-10',
+                realm.completed ? 'bg-element-wood border-element-wood text-paper' :
+                realm.current ? 'bg-seal border-seal text-paper' :
+                'bg-paper-aged border-ink-light text-ink-lighter opacity-40'
+              ]">
                 <span v-if="realm.completed">✓</span>
                 <span v-else-if="realm.current">{{ player?.realm?.minor }}</span>
                 <span v-else>🔒</span>
               </div>
-              <div class="realm-name">{{ realm.name }}</div>
-              <div v-if="index < realmTimeline.length - 1" class="realm-connector"></div>
+              <div class="text-xs font-semibold text-center text-ink-light">{{ realm.name }}</div>
+              <div v-if="index < realmTimeline.length - 1" class="absolute top-6 left-1/2 right-[-50%] h-0.5 bg-ink-light z-0"></div>
             </div>
           </div>
         </Card>
 
         <!-- Active Technique -->
-        <Card title="Công Pháp Tu Luyện" shadow class="mt-4">
-          <div v-if="activeTechnique" class="technique-display">
-            <div class="technique-header">
-              <div class="technique-name">{{ activeTechnique.name }}</div>
-              <div class="technique-element" :style="{ color: getElementColor(activeTechnique.element) }">
-                {{ activeTechnique.element }}
+        <Card title="Công Pháp Tu Luyện" shadow>
+          <div v-if="activeTechnique" class="flex flex-col gap-3">
+            <div class="flex justify-between items-center">
+              <div class="text-lg font-bold text-ink">{{ activeTechnique.name }}</div>
+              <div :class="['text-sm font-semibold uppercase px-3 py-1', getElementColorClass(activeTechnique.element)]">
+                {{ getElementName(activeTechnique.element) }}
               </div>
             </div>
-            <div class="technique-desc">{{ activeTechnique.description }}</div>
+            <div class="text-sm text-ink-light leading-relaxed">{{ activeTechnique.description }}</div>
             <Divider spacing="sm" />
-            <div class="technique-stats">
-              <div class="stat-item">
-                <span>Tốc độ Tu Luyện:</span>
-                <span class="stat-highlight">+{{ ((activeTechnique.baseRate - 1) * 100).toFixed(0) }}%</span>
-              </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-ink-light">Tốc độ Tu Luyện:</span>
+              <span class="font-bold text-element-wood">+{{ ((activeTechnique.baseRate - 1) * 100).toFixed(0) }}%</span>
             </div>
           </div>
-          <div v-else class="no-technique">
-            <p>Chưa trang bị công pháp</p>
+          <div v-else class="text-center py-8 text-ink-light">
+            <p class="mb-4">Chưa trang bị công pháp</p>
             <Button size="sm" @click="() => $emit('change-tab', 'techniques')">Chọn Công Pháp</Button>
           </div>
         </Card>
 
         <!-- World State -->
-        <Card title="Thiên Địa Linh Khí" shadow class="mt-4">
-          <div class="world-state">
-            <div class="world-cycle">
-              <div class="cycle-label">Chu Kỳ Ngũ Hành:</div>
-              <div :class="['cycle-value', `cycle-${worldCycle}`]">{{ getCycleName(worldCycle) }}</div>
+        <Card title="Thiên Địa Linh Khí" shadow>
+          <div class="flex flex-col gap-4">
+            <div class="flex justify-between items-center">
+              <div class="text-sm text-ink-light">Chu Kỳ Ngũ Hành:</div>
+              <div :class="['font-bold', getElementColorClass(worldCycle)]">{{ getCycleName(worldCycle) }}</div>
             </div>
-            <div v-if="worldEvent" class="world-event">
-              <div class="event-label">Sự Kiện:</div>
-              <div class="event-value">{{ getEventName(worldEvent) }}</div>
+            <div v-if="worldEvent" class="flex justify-between items-center">
+              <div class="text-sm text-ink-light">Sự Kiện:</div>
+              <div class="font-bold text-gold">{{ getEventName(worldEvent) }}</div>
             </div>
           </div>
         </Card>
       </div>
 
       <!-- Right Column -->
-      <div class="cultivation-col">
+      <div class="flex flex-col gap-4">
         <!-- Cultivation Rate Breakdown -->
         <Card title="Tốc Độ Tu Luyện" shadow>
-          <div class="rate-breakdown">
-            <div class="rate-total">
-              <span>Tổng:</span>
-              <span class="rate-value">+{{ (player?.cultivation?.baseRate || 1).toFixed(1) }} Qi/giây</span>
+          <div class="flex flex-col gap-3">
+            <div class="flex justify-between text-lg font-bold">
+              <span class="text-ink">Tổng:</span>
+              <span class="text-element-wood font-mono">+{{ (player?.cultivation?.baseRate || 1).toFixed(1) }} Qi/giây</span>
             </div>
             <Divider spacing="sm" />
-            <div class="rate-factors">
-              <div class="factor-item">
-                <span>Cơ Bản:</span>
-                <span>×1.0</span>
+            <div class="flex flex-col gap-2 text-sm">
+              <div class="flex justify-between">
+                <span class="text-ink-light">Cơ Bản:</span>
+                <span class="text-ink">×1.0</span>
               </div>
-              <div class="factor-item">
-                <span>Công Pháp:</span>
-                <span class="factor-positive">+{{ activeTechnique ? ((activeTechnique.baseRate - 1) * 100).toFixed(0) : 0 }}%</span>
+              <div class="flex justify-between">
+                <span class="text-ink-light">Công Pháp:</span>
+                <span class="text-element-wood font-semibold">+{{ activeTechnique ? ((activeTechnique.baseRate - 1) * 100).toFixed(0) : 0 }}%</span>
               </div>
-              <div class="factor-item">
-                <span>Trang Bị:</span>
-                <span class="factor-positive">+0%</span>
+              <div class="flex justify-between">
+                <span class="text-ink-light">Trang Bị:</span>
+                <span class="text-element-wood font-semibold">+0%</span>
               </div>
-              <div class="factor-item">
-                <span>Chu Kỳ Thiên Địa:</span>
-                <span class="factor-positive">+0%</span>
+              <div class="flex justify-between">
+                <span class="text-ink-light">Chu Kỳ Thiên Địa:</span>
+                <span class="text-element-wood font-semibold">+0%</span>
               </div>
-              <div v-if="player?.sect?.contribution" class="factor-item">
-                <span>Tông Môn:</span>
-                <span class="factor-positive">+{{ getSectBonus() }}%</span>
+              <div v-if="player?.sect?.contribution" class="flex justify-between">
+                <span class="text-ink-light">Tông Môn:</span>
+                <span class="text-element-wood font-semibold">+{{ getSectBonus() }}%</span>
               </div>
             </div>
           </div>
         </Card>
 
         <!-- Quick Actions -->
-        <Card title="Hành Động" shadow class="mt-4">
-          <div class="actions-grid">
+        <Card title="Hành Động" shadow>
+          <div class="grid gap-3">
             <Button variant="primary" size="lg" full-width :loading="loading" @click="breakthrough">
               Đột Phá Cảnh Giới
             </Button>
@@ -205,13 +208,13 @@ const logs = computed(() => {
         </Card>
 
         <!-- Recent Logs -->
-        <Card title="Nhật Ký Tu Luyện" shadow class="mt-4">
-          <div class="logs-container">
-            <div v-for="(log, index) in logs" :id="index" class="log-entry">
-              <span class="log-time">{{ new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) }}</span>
-              <span class="log-text">{{ log }}</span>
+        <Card title="Nhật Ký Tu Luyện" shadow>
+          <div class="max-h-[300px] overflow-y-auto scrollbar-ink flex flex-col gap-2">
+            <div v-for="(log, index) in logs" :key="index" class="flex gap-3 p-2 bg-paper-aged border-l-2 border-seal text-sm">
+              <span class="text-ink-light font-semibold shrink-0">{{ new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) }}</span>
+              <span class="text-ink flex-1">{{ log }}</span>
             </div>
-            <div v-if="logs.length === 0" class="no-logs">
+            <div v-if="logs.length === 0" class="text-center py-8 text-ink-light">
               Chưa có nhật ký
             </div>
           </div>
@@ -220,256 +223,3 @@ const logs = computed(() => {
     </div>
   </div>
 </template>
-
-<style scoped>
-.cultivation-tab {
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.cultivation-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-}
-
-.cultivation-col {
-  display: flex;
-  flex-direction: column;
-}
-
-.mt-4 {
-  margin-top: 1rem;
-}
-
-/* Realm Timeline */
-.realm-timeline {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 0;
-}
-
-.realm-step {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  flex: 1;
-}
-
-.realm-marker {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 50%;
-  border: 3px solid v-bind('colors.border.dark');
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  background-color: v-bind('colors.bg.secondary');
-  color: v-bind('colors.text.secondary');
-  z-index: 2;
-}
-
-.realm-completed {
-  background-color: v-bind('colors.success');
-  border-color: v-bind('colors.success');
-  color: white;
-}
-
-.realm-current {
-  background: linear-gradient(135deg, v-bind('colors.accent[900]'), v-bind('colors.accent[700]'));
-  border-color: v-bind('colors.accent[900]');
-  color: white;
-  box-shadow: 0 0 20px rgba(127, 29, 29, 0.5);
-}
-
-.realm-locked {
-  opacity: 0.4;
-}
-
-.realm-name {
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-align: center;
-  color: v-bind('colors.text.secondary');
-}
-
-.realm-connector {
-  position: absolute;
-  top: 1.5rem;
-  left: 50%;
-  right: -50%;
-  height: 2px;
-  background-color: v-bind('colors.border.dark');
-  z-index: 1;
-}
-
-/* Technique Display */
-.technique-display {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.technique-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.technique-name {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: v-bind('colors.text.primary');
-}
-
-.technique-element {
-  font-size: 0.875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  padding: 0.25rem 0.75rem;
-  border-radius: 999px;
-  background-color: currentColor;
-  color: white;
-  opacity: 0.9;
-}
-
-.technique-desc {
-  font-size: 0.875rem;
-  color: v-bind('colors.text.secondary');
-  line-height: 1.5;
-}
-
-.technique-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.stat-item {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.875rem;
-}
-
-.stat-highlight {
-  font-weight: 700;
-  color: v-bind('colors.success');
-}
-
-.no-technique {
-  text-align: center;
-  padding: 2rem 0;
-  color: v-bind('colors.text.secondary');
-}
-
-/* World State */
-.world-state {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.world-cycle, .world-event {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.cycle-label, .event-label {
-  font-size: 0.875rem;
-  color: v-bind('colors.text.secondary');
-}
-
-.cycle-value, .event-value {
-  font-size: 1rem;
-  font-weight: 700;
-}
-
-/* Rate Breakdown */
-.rate-breakdown {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.rate-total {
-  display: flex;
-  justify-content: space-between;
-  font-size: 1.125rem;
-  font-weight: 700;
-}
-
-.rate-value {
-  color: v-bind('colors.success');
-  font-family: monospace;
-}
-
-.rate-factors {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.factor-item {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.875rem;
-}
-
-.factor-positive {
-  color: v-bind('colors.success');
-  font-weight: 600;
-}
-
-/* Actions */
-.actions-grid {
-  display: grid;
-  gap: 0.75rem;
-}
-
-/* Logs */
-.logs-container {
-  max-height: 300px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.log-entry {
-  display: flex;
-  gap: 0.75rem;
-  padding: 0.5rem;
-  background-color: v-bind('colors.bg.secondary');
-  border-left: 3px solid v-bind('colors.accent[900]');
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
-}
-
-.log-time {
-  color: v-bind('colors.text.secondary');
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-.log-text {
-  color: v-bind('colors.text.primary');
-  flex: 1;
-}
-
-.no-logs {
-  text-align: center;
-  padding: 2rem;
-  color: v-bind('colors.text.secondary');
-}
-
-@media (max-width: 1024px) {
-  .cultivation-grid {
-    grid-template-columns: 1fr;
-  }
-}
-</style>
