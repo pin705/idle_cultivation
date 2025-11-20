@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import { usePlayerStore } from '../../stores/player'
 import { useApiAction } from '../../composables/useApiAction'
-import { TECHNIQUES, REALMS, canUnlockTechnique } from '../../../shared/constants'
+import { TECHNIQUES, canUnlockTechnique } from '../../../shared/constants'
 import { colors } from '../../styles/design-tokens'
 import Card from '../ui/Card.vue'
 import Button from '../ui/Button.vue'
@@ -18,7 +18,7 @@ const unlockedTechs = computed(() => {
   return (player.inventory || []).filter((i: any) => i.type === 'technique').map((i: any) => i.id) || []
 })
 const activeTech = computed(() => player.cultivation?.activeTechnique || null)
-const equippedPassives = computed(() => {
+const equippedPassives = computed((): string[] => {
   // Passive techniques equipped - placeholder for now
   return []
 })
@@ -54,7 +54,7 @@ const categorizedTechs = computed(() => {
 async function unlockTechnique(id: string) {
   loading.value = true
   try {
-    await call('TECH_UNLOCK', { id: id })
+    await call('TECH_UNLOCK', { key: id })
   } finally {
     loading.value = false
   }
@@ -63,28 +63,27 @@ async function unlockTechnique(id: string) {
 async function equipTechnique(id: string) {
   loading.value = true
   try {
-    await call('TECH_EQUIP', { id: id })
+    await call('TECH_EQUIP', { key: id })
   } finally {
     loading.value = false
   }
 }
 
-function getElementColor(element: string): string {
+function getElementColor(element?: string): string {
+  if (!element) return colors.element.neutral
   return colors.element[element as keyof typeof colors.element] || colors.element.neutral
 }
 
-function getRealmName(realm: string): string {
-  return realm
-}
-
-function getPathName(path: string): string {
-  const paths: Record<string, string> = {
-    sword: 'Kiếm Đạo',
-    alchemy: 'Đan Đạo',
-    body: 'Thể Tu',
-    elementalist: 'Ngũ Hành'
+function getElementName(element?: string): string {
+  if (!element) return ''
+  const names: Record<string, string> = {
+    fire: '🔥 Hỏa',
+    water: '💧 Thủy',
+    wood: '🌿 Mộc',
+    metal: '⚙️ Kim',
+    earth: '🪨 Thổ'
   }
-  return paths[path] || path
+  return names[element] || element
 }
 </script>
 
@@ -101,7 +100,7 @@ function getPathName(path: string): string {
           <div class="techniques-grid">
             <div 
               v-for="tech in categorizedTechs.active" 
-              :id="tech.id"
+              :key="tech.id"
               :class="['technique-card', { 
                 'technique-locked': !tech.unlocked,
                 'technique-active': tech.isActive 
@@ -111,38 +110,45 @@ function getPathName(path: string): string {
               <!-- Header -->
               <div class="tech-header">
                 <div class="tech-name">{{ tech.name }}</div>
-                <div class="tech-element" :style="{ color: getElementColor(tech.element) }">
-                  {{ tech.element }}
+                <div v-if="tech.element" class="tech-element" :style="{ color: getElementColor(tech.element) }">
+                  {{ getElementName(tech.element) }}
                 </div>
               </div>
               
               <!-- Description -->
-              <div class="tech-description">{{ tech.description }}</div>
+              <div class="tech-description">{{ tech.name }} - Kỹ thuật chủ động</div>
               
               <Divider spacing="sm" />
               
               <!-- Stats -->
-              <div class="tech-stats">
-                <div class="stat-item">
-                  <span class="stat-label">Tốc độ:</span>
-                  <span class="stat-value">+{{ ((tech.baseRate - 1) * 100).toFixed(0) }}%</span>
+              <div class="tech-stats" v-if="tech.effect">
+                <div class="stat-item" v-if="tech.effect.rateMult && tech.effect.rateMult !== 1">
+                  <span class="stat-label">Tu Luyện:</span>
+                  <span class="stat-value">×{{ tech.effect.rateMult }}</span>
+                </div>
+                <div class="stat-item" v-if="tech.effect.rateAdd">
+                  <span class="stat-label">Qi/s:</span>
+                  <span class="stat-value">+{{ tech.effect.rateAdd }}</span>
                 </div>
               </div>
               
               <!-- Requirements -->
               <div v-if="!tech.unlocked" class="tech-requirements">
                 <div class="req-title">Yêu cầu:</div>
-                <div v-if="tech.requirements?.minRealm" class="req-item">
-                  🏔️ {{ getRealmName(tech.requirements.minRealm) }}
+                <div v-if="tech.minRealm" class="req-item">
+                  🏔️ {{ tech.minRealm }}
                 </div>
-                <div v-if="tech.requirements?.minQi" class="req-item">
-                  ⚡ {{ tech.requirements.minQi.toLocaleString() }} Qi
+                <div v-if="tech.minRealmMinor" class="req-item">
+                  🔢 Tầng {{ tech.minRealmMinor }}
                 </div>
-                <div v-if="tech.requirements?.path" class="req-item">
-                  🛤️ {{ getPathName(tech.requirements.path) }}
+                <div v-if="tech.requires && tech.requires.length > 0" class="req-item">
+                  🔗 Yêu cầu: {{ tech.requires.length }} kỹ thuật
                 </div>
-                <div v-if="tech.cost" class="req-item">
-                  💎 {{ tech.cost.toLocaleString() }} Linh Thạch
+                <div v-if="tech.cost?.spiritStones" class="req-item">
+                  💎 {{ tech.cost.spiritStones.toLocaleString() }} Linh Thạch
+                </div>
+                <div v-if="tech.cost?.herbs" class="req-item">
+                  🌿 {{ tech.cost.herbs.toLocaleString() }} Linh Dược
                 </div>
               </div>
               
@@ -152,8 +158,8 @@ function getPathName(path: string): string {
                   v-if="!tech.unlocked && tech.canUnlock"
                   variant="primary" 
                   size="sm" 
-                  full-width
-                  :loading="loading"
+                  fullWidth
+                  :disabled="loading"
                   @click.stop="unlockTechnique(tech.id)"
                 >
                   Mở Khóa
@@ -162,8 +168,8 @@ function getPathName(path: string): string {
                   v-else-if="tech.unlocked && !tech.isActive"
                   variant="accent" 
                   size="sm" 
-                  full-width
-                  :loading="loading"
+                  fullWidth
+                  :disabled="loading"
                   @click.stop="equipTechnique(tech.id)"
                 >
                   Trang Bị
@@ -190,7 +196,7 @@ function getPathName(path: string): string {
           <div class="techniques-grid">
             <div 
               v-for="tech in categorizedTechs.passive" 
-              :id="tech.id"
+              :key="tech.id"
               :class="['technique-card', { 
                 'technique-locked': !tech.unlocked,
                 'technique-active': tech.isPassiveEquipped 
@@ -200,43 +206,45 @@ function getPathName(path: string): string {
               <!-- Header -->
               <div class="tech-header">
                 <div class="tech-name">{{ tech.name }}</div>
-                <div class="tech-element" :style="{ color: getElementColor(tech.element) }">
-                  {{ tech.element }}
+                <div v-if="tech.element" class="tech-element" :style="{ color: getElementColor(tech.element) }">
+                  {{ getElementName(tech.element) }}
                 </div>
               </div>
               
               <!-- Description -->
-              <div class="tech-description">{{ tech.description }}</div>
+              <div class="tech-description">{{ tech.name }} - Kỹ thuật bị động</div>
               
               <Divider spacing="sm" />
               
               <!-- Stats -->
-              <div class="tech-stats">
-                <div v-if="tech.effect?.qiBonus" class="stat-item">
-                  <span class="stat-label">Qi Bonus:</span>
-                  <span class="stat-value">+{{ (tech.effect.qiBonus * 100).toFixed(0) }}%</span>
+              <div class="tech-stats" v-if="tech.effect">
+                <div class="stat-item" v-if="tech.effect.rateMult && tech.effect.rateMult !== 1">
+                  <span class="stat-label">Tu Luyện:</span>
+                  <span class="stat-value">×{{ tech.effect.rateMult }}</span>
                 </div>
-                <div v-if="tech.effect?.stoneBonus" class="stat-item">
-                  <span class="stat-label">Linh Thạch:</span>
-                  <span class="stat-value">+{{ (tech.effect.stoneBonus * 100).toFixed(0) }}%</span>
-                </div>
-                <div v-if="tech.effect?.tribulationBonus" class="stat-item">
-                  <span class="stat-label">Thiên Kiếp:</span>
-                  <span class="stat-value">+{{ (tech.effect.tribulationBonus * 100).toFixed(0) }}%</span>
+                <div class="stat-item" v-if="tech.effect.rateAdd">
+                  <span class="stat-label">Qi/s:</span>
+                  <span class="stat-value">+{{ tech.effect.rateAdd }}</span>
                 </div>
               </div>
               
               <!-- Requirements -->
               <div v-if="!tech.unlocked" class="tech-requirements">
                 <div class="req-title">Yêu cầu:</div>
-                <div v-if="tech.requirements?.minRealm" class="req-item">
-                  🏔️ {{ getRealmName(tech.requirements.minRealm) }}
+                <div v-if="tech.minRealm" class="req-item">
+                  🏔️ {{ tech.minRealm }}
                 </div>
-                <div v-if="tech.requirements?.minQi" class="req-item">
-                  ⚡ {{ tech.requirements.minQi.toLocaleString() }} Qi
+                <div v-if="tech.minRealmMinor" class="req-item">
+                  🔢 Tầng {{ tech.minRealmMinor }}
                 </div>
-                <div v-if="tech.cost" class="req-item">
-                  💎 {{ tech.cost.toLocaleString() }} Linh Thạch
+                <div v-if="tech.requires && tech.requires.length > 0" class="req-item">
+                  🔗 Yêu cầu: {{ tech.requires.length }} kỹ thuật
+                </div>
+                <div v-if="tech.cost?.spiritStones" class="req-item">
+                  💎 {{ tech.cost.spiritStones.toLocaleString() }} Linh Thạch
+                </div>
+                <div v-if="tech.cost?.herbs" class="req-item">
+                  🌿 {{ tech.cost.herbs.toLocaleString() }} Linh Dược
                 </div>
               </div>
               
@@ -246,8 +254,8 @@ function getPathName(path: string): string {
                   v-if="!tech.unlocked && tech.canUnlock"
                   variant="primary" 
                   size="sm" 
-                  full-width
-                  :loading="loading"
+                  fullWidth
+                  :disabled="loading"
                   @click.stop="unlockTechnique(tech.id)"
                 >
                   Mở Khóa
@@ -256,8 +264,8 @@ function getPathName(path: string): string {
                   v-else-if="tech.unlocked && !tech.isPassiveEquipped"
                   variant="accent" 
                   size="sm" 
-                  full-width
-                  :loading="loading"
+                  fullWidth
+                  :disabled="loading"
                   @click.stop="equipTechnique(tech.id)"
                 >
                   Trang Bị
@@ -345,9 +353,7 @@ function getPathName(path: string): string {
   text-transform: uppercase;
   padding: 0.25rem 0.625rem;
   border-radius: 999px;
-  background-color: currentColor;
-  color: white;
-  opacity: 0.9;
+  background-color: rgba(0, 0, 0, 0.1);
   white-space: nowrap;
 }
 
@@ -376,58 +382,56 @@ function getPathName(path: string): string {
 
 .stat-value {
   font-weight: 700;
-  color: v-bind('colors.success');
-  font-family: monospace;
+  color: v-bind('colors.accent[800]');
 }
 
 .tech-requirements {
-  padding: 0.75rem;
-  background-color: v-bind('colors.bg.tertiary');
-  border-radius: 0.25rem;
-  font-size: 0.8125rem;
+  border-top: 1px solid v-bind('colors.border.light');
+  padding-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .req-title {
+  font-size: 0.75rem;
   font-weight: 600;
-  color: v-bind('colors.text.primary');
-  margin-bottom: 0.5rem;
+  color: v-bind('colors.text.secondary');
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
 }
 
 .req-item {
+  font-size: 0.75rem;
+  color: v-bind('colors.text.secondary');
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.25rem 0;
-  color: v-bind('colors.text.secondary');
+  gap: 0.375rem;
 }
 
 .tech-actions {
   margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+.active-badge,
+.locked-badge {
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 
 .active-badge {
-  padding: 0.5rem 1rem;
-  background-color: v-bind('colors.success');
-  color: white;
-  text-align: center;
-  border-radius: 0.25rem;
-  font-weight: 600;
-  font-size: 0.875rem;
+  background-color: rgba(34, 197, 94, 0.1);
+  color: rgb(22, 163, 74);
+  border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
 .locked-badge {
-  padding: 0.5rem 1rem;
-  background-color: v-bind('colors.bg.tertiary');
-  color: v-bind('colors.text.secondary');
-  text-align: center;
-  border-radius: 0.25rem;
-  font-weight: 600;
-  font-size: 0.875rem;
-}
-
-@media (max-width: 768px) {
-  .techniques-grid {
-    grid-template-columns: 1fr;
-  }
+  background-color: rgba(107, 114, 128, 0.1);
+  color: rgb(107, 114, 128);
+  border: 1px solid rgba(107, 114, 128, 0.3);
 }
 </style>
