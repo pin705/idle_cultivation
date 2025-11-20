@@ -53,7 +53,11 @@ export const usePlayerStore = defineStore('player', {
                     multiplier = 0.5
                 }
             }
-            return (state.cultivation.baseRate * multiplier).toFixed(1)
+            // Approximate technique effect for display only
+            const { calcTechniqueMultiplier } = require('../../shared/constants')
+            const tech = calcTechniqueMultiplier(state.cultivation.activeTechnique as any, (state as any).techniques?.equippedPassives || [])
+            const rate = state.cultivation.baseRate * multiplier * (tech?.mult || 1) + (tech?.add || 0)
+            return rate.toFixed(1)
         }
     },
 
@@ -74,7 +78,7 @@ export const usePlayerStore = defineStore('player', {
                 water: 'fire',
                 fire: 'metal'
             }
-            return counters[worldElement] === cultivationElement
+            return counters[worldElement as keyof typeof counters] === cultivationElement
         },
 
         gatherQi(amount: number) {
@@ -136,9 +140,9 @@ export const usePlayerStore = defineStore('player', {
             this.world.cycleTimer += dt
             if (this.world.cycleTimer >= this.world.cycleDuration) {
                 this.world.cycleTimer = 0
-                const elements = ['metal', 'wood', 'water', 'fire', 'earth']
+                const elements: string[] = ['metal', 'wood', 'water', 'fire', 'earth']
                 const currentIndex = elements.indexOf(this.world.element)
-                const nextEl = elements[(currentIndex + 1) % elements.length] as string
+                const nextEl = elements[(currentIndex + 1) % elements.length]
                 this.world.element = nextEl || 'metal'
             }
         },
@@ -193,7 +197,8 @@ export const usePlayerStore = defineStore('player', {
             this.resources = data.resources || { spiritStones: 0, herbs: 0 }
             this.cultivation = data.cultivation
             this.inventory = data.inventory || []
-            this.logs = data.logs || []
+            ;(this as any).equipment = data.equipment || []
+            ;(this as any).techniques = data.techniques || { unlocked: ['basic'], equippedPassives: [] }
             if (data.world) {
                 this.world = data.world
             }

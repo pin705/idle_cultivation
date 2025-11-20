@@ -10,6 +10,27 @@ export type ActionType =
   | 'AUTH_REGISTER'
   | 'AUTH_LOGOUT'
   | 'CREATE_CHARACTER'
+  | 'TECH_UNLOCK'
+  | 'TECH_EQUIP'
+  | 'SNAPSHOT_SAVE'
+  | 'SNAPSHOT_LIST'
+  | 'SNAPSHOT_ROLLBACK'
+  | 'EQUIP_ITEM'
+  | 'UNEQUIP_ITEM'
+  | 'SHOP_LIST'
+  | 'SHOP_BUY'
+  | 'SHOP_SELL'
+  | 'ITEM_REROLL'
+  | 'TRIB_PREPARE'
+  | 'TRIB_START'
+  | 'TRIB_RESOLVE'
+  | 'REALM_PATH_INFO'
+  | 'SECT_CREATE'
+  | 'SECT_JOIN'
+  | 'SECT_DONATE'
+  | 'MISSION_LIST'
+  | 'MISSION_ASSIGN'
+  | 'MISSION_CLAIM'
 
 export function useApiAction() {
   const player = usePlayerStore()
@@ -25,10 +46,10 @@ export function useApiAction() {
         player.loadFromData(res.player)
       }
 
-      if (res?.message) {
-        // Server already pushes logs; client adds only for non-player responses
-        if (!res.player) player.addLog(res.message)
-      }
+      // Add logs from server response (do not persist on server)
+      if (res?.log) player.addLog(res.log)
+      if (Array.isArray(res?.logs)) (res.logs as string[]).forEach((l) => player.addLog(l))
+      if (res?.message && !res?.log && !res?.logs) player.addLog(res.message)
 
       return res
     } catch (e: any) {
