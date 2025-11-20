@@ -6,6 +6,9 @@ import TechniqueModal from './TechniqueModal.vue'
 import EquipmentModal from './EquipmentModal.vue'
 import ShopModal from './ShopModal.vue'
 import CraftingModal from './CraftingModal.vue'
+import TribulationModal from './TribulationModal.vue'
+import SectModal from './SectModal.vue'
+import MissionBoardModal from './MissionBoardModal.vue'
 
 const showInventory = ref(false)
 const showCharacter = ref(false)
@@ -13,6 +16,9 @@ const showTechnique = ref(false)
 const showEquipment = ref(false)
 const showShop = ref(false)
 const showCrafting = ref(false)
+const showTribulation = ref(false)
+const showSect = ref(false)
+const showMissions = ref(false)
 </script>
 
 <template>
@@ -35,6 +41,15 @@ const showCrafting = ref(false)
       </button>
       <button @click="showCrafting = true" class="px-4 py-2 bg-white border-2 border-ink-black rounded hover:bg-gray-50 text-sm font-bold">
         Chế Tạo
+      </button>
+      <button @click="showTribulation = true" class="px-4 py-2 bg-white border-2 border-ink-black rounded hover:bg-gray-50 text-sm font-bold">
+        Thiên Kiếp
+      </button>
+      <button @click="showSect = true" class="px-4 py-2 bg-white border-2 border-ink-black rounded hover:bg-gray-50 text-sm font-bold">
+        Tông Môn
+      </button>
+      <button @click="showMissions = true" class="px-4 py-2 bg-white border-2 border-ink-black rounded hover:bg-gray-50 text-sm font-bold">
+        Nhiệm Vụ
       </button>
     </div>
 
@@ -60,6 +75,18 @@ const showCrafting = ref(false)
 
     <BaseModal v-model="showCrafting" title="Chế Tạo / Tẩy Luyện" maxWidth="max-w-2xl">
       <CraftingModal />
+    </BaseModal>
+
+    <BaseModal v-model="showTribulation" title="Thiên Kiếp" maxWidth="max-w-xl">
+      <TribulationModal />
+    </BaseModal>
+
+    <BaseModal v-model="showSect" title="Tông Môn" maxWidth="max-w-xl">
+      <SectModal />
+    </BaseModal>
+
+    <BaseModal v-model="showMissions" title="Bảng Nhiệm Vụ" maxWidth="max-w-3xl">
+      <MissionBoardModal />
     </BaseModal>
   </div>
 </template>

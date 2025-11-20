@@ -4,6 +4,7 @@ import { useApiAction } from '../composables/useApiAction'
 export const usePlayerStore = defineStore('player', {
     state: () => ({
         name: '',
+        realmPath: 'none' as any,
         realm: {
             major: 'Luyện Khí', // Luyện Khí, Trúc Cơ, Kim Đan...
             minor: 1, // Tầng 1-9
@@ -31,7 +32,10 @@ export const usePlayerStore = defineStore('player', {
             cycleTimer: 0,
             cycleDuration: 10, // 10 seconds per element for testing
         },
-        logs: [] as string[]
+        logs: [] as string[],
+        tribulation: { active: false, difficulty: 1, endsAt: null as any, buff: 0 } as any,
+        sect: { id: null as any, contribution: 0 } as any,
+        missions: [] as any[]
     }),
 
     getters: {
@@ -192,6 +196,7 @@ export const usePlayerStore = defineStore('player', {
 
         loadFromData(data: any) {
             this.name = data.name
+            ;(this as any).realmPath = data.realmPath || (this as any).realmPath
             this.realm = data.realm
             this.attributes = data.attributes
             this.resources = data.resources || { spiritStones: 0, herbs: 0 }
@@ -199,6 +204,9 @@ export const usePlayerStore = defineStore('player', {
             this.inventory = data.inventory || []
             ;(this as any).equipment = data.equipment || []
             ;(this as any).techniques = data.techniques || { unlocked: ['basic'], equippedPassives: [] }
+            this.tribulation = data.tribulation || this.tribulation
+            this.sect = data.sect || this.sect
+            this.missions = data.missions || this.missions
             if (data.world) {
                 this.world = data.world
             }

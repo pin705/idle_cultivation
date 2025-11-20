@@ -9,6 +9,7 @@ const player = usePlayerStore()
       <div>
         <h4 class="text-xl font-bold">{{ player.name }}</h4>
         <p class="text-seal-red font-bold">{{ player.formattedRealm }}</p>
+        <p class="text-sm text-gray-600">Đạo: <span class="font-bold capitalize">{{ (player as any).realmPath || 'none' }}</span></p>
       </div>
       <div class="text-sm text-gray-600">
         Tốc độ hấp thu: <span class="font-bold">{{ player.qiRate }}</span>

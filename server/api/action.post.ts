@@ -365,6 +365,13 @@ export default defineEventHandler(async (event) => {
                 log = message
                 break
             }
+            case 'SECT_LEAVE': {
+                if (!player.sect?.id) return { success: false, message: 'Chưa gia nhập tông môn' }
+                player.sect = { id: null as any, contribution: 0 }
+                message = 'Đã rời tông môn.'
+                log = message
+                break
+            }
             case 'SECT_DONATE': {
                 const { amount } = payload || {}
                 if (!player.sect?.id) return { success: false, message: 'Chưa gia nhập tông môn' }

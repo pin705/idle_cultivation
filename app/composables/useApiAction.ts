@@ -27,6 +27,7 @@ export type ActionType =
   | 'REALM_PATH_INFO'
   | 'SECT_CREATE'
   | 'SECT_JOIN'
+  | 'SECT_LEAVE'
   | 'SECT_DONATE'
   | 'MISSION_LIST'
   | 'MISSION_ASSIGN'
