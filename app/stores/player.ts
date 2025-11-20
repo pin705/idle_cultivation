@@ -1,0 +1,230 @@
+import { defineStore } from 'pinia'
+
+export const usePlayerStore = defineStore('player', {
+    state: () => ({
+        name: '',
+        realm: {
+            major: 'Luyện Khí', // Luyện Khí, Trúc Cơ, Kim Đan...
+            minor: 1, // Tầng 1-9
+            progress: 0, // Current Qi for next level
+            maxProgress: 100, // Qi needed for next level
+        },
+        attributes: {
+            qi: 0,
+            body: 0,
+            spirit: 0,
+            talent: 0,
+        },
+        resources: {
+            spiritStones: 0,
+            herbs: 0,
+        },
+        inventory: [] as any[],
+        cultivation: {
+            activeTechnique: 'Cơ Bản Công',
+            baseRate: 1, // Qi per second
+            element: 'none', // Current element focus: metal, wood, water, fire, earth, none
+        },
+        world: {
+            element: 'none', // Current world element
+            cycleTimer: 0,
+            cycleDuration: 10, // 10 seconds per element for testing
+        },
+        logs: [] as string[]
+    }),
+
+    getters: {
+        formattedRealm: (state) => `${state.realm.major} - Tầng ${state.realm.minor}`,
+        qiRate: (state) => {
+            let multiplier = 1.0
+            if (state.cultivation.element === state.world.element) {
+                multiplier = 2.0
+            } else if (state.cultivation.element !== 'none' && state.world.element !== 'none') {
+                // Simple counter check for getter display
+                const counters: Record<string, string> = {
+                    metal: 'wood',
+                    wood: 'earth',
+                    earth: 'water',
+                    water: 'fire',
+                    fire: 'metal'
+                }
+                if (counters[state.world.element] === state.cultivation.element) {
+                    multiplier = 0.5
+                }
+            }
+            return (state.cultivation.baseRate * multiplier).toFixed(1)
+        }
+    },
+
+    actions: {
+        addLog(message: string) {
+            const time = new Date().toLocaleTimeString()
+            this.logs.unshift(`[${time}] ${message}`)
+            if (this.logs.length > 50) {
+                this.logs.pop()
+            }
+        },
+
+        isCountered(cultivationElement: string, worldElement: string) {
+            const counters: Record<string, string> = {
+                metal: 'wood',
+                wood: 'earth',
+                earth: 'water',
+                water: 'fire',
+                fire: 'metal'
+            }
+            return counters[worldElement] === cultivationElement
+        },
+
+        gatherQi(amount: number) {
+            // Apply multiplier based on world element
+            let multiplier = 1.0
+            if (this.cultivation.element === this.world.element) {
+                multiplier = 2.0
+            } else if (this.isCountered(this.cultivation.element, this.world.element)) {
+                multiplier = 0.5
+            }
+
+            const actualGain = Math.floor(amount * multiplier)
+            this.attributes.qi += actualGain
+        },
+
+        async attemptBreakthrough() {
+            try {
+                await this.saveGame()
+
+                const response = await $fetch('/api/action', {
+                    method: 'POST',
+                    body: { type: 'BREAKTHROUGH' }
+                }) as any
+
+                if (response.success) {
+                    if (response.player) {
+                        this.loadFromData(response.player)
+                    }
+                    this.addLog(response.message)
+                    alert(response.message)
+                } else {
+                    this.addLog(`Đột phá thất bại: ${response.message}`)
+                    console.warn(response.message)
+                }
+            } catch (e) {
+                console.error('Breakthrough failed', e)
+            }
+        },
+
+        async findItem() {
+            try {
+                const response = await $fetch('/api/action', {
+                    method: 'POST',
+                    body: { type: 'FIND_ITEM' }
+                }) as any
+
+                if (response.success) {
+                    if (response.player) {
+                        this.loadFromData(response.player)
+                    }
+                    this.addLog(response.message)
+                }
+            } catch (e) {
+                console.error('Failed to find item', e)
+            }
+        },
+
+        advanceMajorRealm() {
+            // Client side prediction logic (removed/unused now as server handles it)
+        },
+
+        cycleWorldElement(dt: number) {
+            this.world.cycleTimer += dt
+            if (this.world.cycleTimer >= this.world.cycleDuration) {
+                this.world.cycleTimer = 0
+                const elements = ['metal', 'wood', 'water', 'fire', 'earth']
+                const currentIndex = elements.indexOf(this.world.element)
+                this.world.element = elements[(currentIndex + 1) % elements.length]
+            }
+        },
+
+        tick(dt: number) {
+            // Called every game tick (e.g. 1 second)
+            this.cycleWorldElement(dt)
+            const production = this.cultivation.baseRate * (dt / 1000)
+            this.gatherQi(production)
+        },
+
+        async saveGame() {
+            try {
+                const response = await $fetch('/api/action', {
+                    method: 'POST',
+                    body: {
+                        type: 'SAVE',
+                        payload: {
+                            qi: this.attributes.qi,
+                            body: this.attributes.body,
+                            spirit: this.attributes.spirit,
+                            talent: this.attributes.talent,
+                            resources: this.resources,
+                            cultivation: this.cultivation,
+                            world: this.world
+                        }
+                    }
+                }) as any
+
+                if (response.success) {
+                    this.addLog('Đã lưu game.')
+                }
+            } catch (e) {
+                console.error('Save failed', e)
+            }
+        },
+
+        async loadGame() {
+            try {
+                const response = await $fetch('/api/load') as any
+                if (response.success) {
+                    this.loadFromData(response.player)
+                    this.checkOfflineProgress()
+                    this.addLog('Đã tải game.')
+                } else {
+                    console.warn(response.message)
+                }
+            } catch (e) {
+                console.error('Load failed', e)
+            }
+        },
+
+        loadFromData(data: any) {
+            this.name = data.name
+            this.realm = data.realm
+            this.attributes = data.attributes
+            this.resources = data.resources || { spiritStones: 0, herbs: 0 }
+            this.cultivation = data.cultivation
+            this.inventory = data.inventory || []
+            this.logs = data.logs || []
+            if (data.world) {
+                this.world = data.world
+            }
+        },
+
+        async checkOfflineProgress() {
+            try {
+                const response = await $fetch('/api/action', {
+                    method: 'POST',
+                    body: { type: 'OFFLINE_CALC' }
+                }) as any
+
+                if (response.success) {
+                    if (response.player) {
+                        this.loadFromData(response.player)
+                    }
+                    if (response.message !== 'Chưa đủ thời gian bế quan.') {
+                        this.addLog(response.message)
+                        alert(response.message)
+                    }
+                }
+            } catch (e) {
+                console.error('Offline check failed', e)
+            }
+        }
+    }
+})
