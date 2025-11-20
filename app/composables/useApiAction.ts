@@ -37,6 +37,9 @@ export type ActionType =
   | 'REALM_LIST'
   | 'REALM_ENTER'
   | 'REALM_COMPLETE'
+  | 'ASCENSION_INFO'
+  | 'ASCENSION_PERFORM'
+  | 'ASCENSION_UPGRADE_PERK'
 
 export function useApiAction() {
   const player = usePlayerStore()

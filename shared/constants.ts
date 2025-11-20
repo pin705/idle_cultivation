@@ -236,3 +236,155 @@ export const WORLD_EVENTS: Record<WorldEventType, WorldEventDef> = {
   }
 }
 
+// World 3.0: Secret Realms Config
+export type RealmTier = 'common' | 'rare' | 'epic' | 'legendary'
+
+export interface SecretRealmConfig {
+  key: string
+  name: string
+  description: string
+  tier: RealmTier
+  duration: number // seconds
+  ticketCost: number
+  requirements: {
+    minRealm: string
+    minQi: number
+  }
+  lootTable: Array<{
+    itemName: string
+    itemType: 'equipment' | 'material' | 'consumable'
+    dropRate: number
+    quantity: { min: number; max: number }
+  }>
+  rewards: {
+    qi: { min: number; max: number }
+    spiritStones: { min: number; max: number }
+    herbs: { min: number; max: number }
+  }
+}
+
+export const SECRET_REALMS: Record<string, SecretRealmConfig> = {
+  misty_forest: {
+    key: 'misty_forest',
+    name: 'Mê Lâm Sơn',
+    description: 'Khu rừng sương mù bao phủ, ẩn chứa nhiều linh dược quý hiếm',
+    tier: 'common',
+    duration: 120,
+    ticketCost: 1,
+    requirements: { minRealm: 'Luyện Khí', minQi: 0 },
+    lootTable: [
+      { itemName: 'Thảo Dược Thường', itemType: 'material', dropRate: 0.8, quantity: { min: 2, max: 5 } },
+      { itemName: 'Linh Thạch', itemType: 'material', dropRate: 0.5, quantity: { min: 5, max: 10 } }
+    ],
+    rewards: { qi: { min: 50, max: 100 }, spiritStones: { min: 10, max: 30 }, herbs: { min: 3, max: 8 } }
+  },
+  crystal_cave: {
+    key: 'crystal_cave',
+    name: 'Thủy Tinh Động',
+    description: 'Hang động ngập tràn tinh thạch phát sáng, nguồn linh khí dồi dào',
+    tier: 'rare',
+    duration: 180,
+    ticketCost: 1,
+    requirements: { minRealm: 'Trúc Cơ', minQi: 500 },
+    lootTable: [
+      { itemName: 'Tinh Thạch Cấp 1', itemType: 'material', dropRate: 0.6, quantity: { min: 1, max: 3 } },
+      { itemName: 'Kiếm Thủy Tinh', itemType: 'equipment', dropRate: 0.2, quantity: { min: 1, max: 1 } }
+    ],
+    rewards: { qi: { min: 150, max: 300 }, spiritStones: { min: 50, max: 100 }, herbs: { min: 5, max: 15 } }
+  },
+  ancient_ruins: {
+    key: 'ancient_ruins',
+    name: 'Cổ Tích Di Tích',
+    description: 'Tàn tích của tông môn cổ đại, chứa đựng kho tàng và bí pháp thất truyền',
+    tier: 'epic',
+    duration: 240,
+    ticketCost: 2,
+    requirements: { minRealm: 'Kim Đan', minQi: 2000 },
+    lootTable: [
+      { itemName: 'Cổ Pháp Bảo', itemType: 'equipment', dropRate: 0.4, quantity: { min: 1, max: 1 } },
+      { itemName: 'Đạo Ngộ Linh Thư', itemType: 'consumable', dropRate: 0.3, quantity: { min: 1, max: 2 } }
+    ],
+    rewards: { qi: { min: 500, max: 1000 }, spiritStones: { min: 150, max: 300 }, herbs: { min: 20, max: 50 } }
+  },
+  heaven_tower: {
+    key: 'heaven_tower',
+    name: 'Thiên Đỉnh Bảo Tháp',
+    description: 'Tháp cao chọc trời, mỗi tầng là một thử thách khắc nghiệt',
+    tier: 'legendary',
+    duration: 300,
+    ticketCost: 3,
+    requirements: { minRealm: 'Nguyên Anh', minQi: 5000 },
+    lootTable: [
+      { itemName: 'Huyền Thiên Bảo Khí', itemType: 'equipment', dropRate: 0.5, quantity: { min: 1, max: 1 } },
+      { itemName: 'Thiên Kiếp Bùa', itemType: 'consumable', dropRate: 0.6, quantity: { min: 1, max: 3 } },
+      { itemName: 'Đạo Ngộ Linh Thạch', itemType: 'material', dropRate: 0.8, quantity: { min: 3, max: 10 } }
+    ],
+    rewards: { qi: { min: 1500, max: 3000 }, spiritStones: { min: 500, max: 1000 }, herbs: { min: 50, max: 100 } }
+  }
+}
+
+// Endgame 4.0: Ascension System
+export interface AscensionPerkDef {
+  id: string
+  name: string
+  description: string
+  cost: number // ascension points
+  maxLevel: number
+  effect: {
+    qiMultPerLevel?: number
+    spiritStonesMultPerLevel?: number
+    dropRateMultPerLevel?: number
+    ticketBonusPerLevel?: number
+    startingQiPerLevel?: number
+  }
+}
+
+export const ASCENSION_PERKS: Record<string, AscensionPerkDef> = {
+  eternal_qi: {
+    id: 'eternal_qi',
+    name: 'Vĩnh Hằng Linh Khí',
+    description: 'Mỗi cấp tăng 10% tốc độ tu luyện vĩnh viễn',
+    cost: 1,
+    maxLevel: 10,
+    effect: { qiMultPerLevel: 0.1 }
+  },
+  treasure_hunter: {
+    id: 'treasure_hunter',
+    name: 'Thám Bảo Cao Thủ',
+    description: 'Tăng 5% tỷ lệ rơi vật phẩm mỗi cấp',
+    cost: 2,
+    maxLevel: 5,
+    effect: { dropRateMultPerLevel: 0.05 }
+  },
+  wealthy_cultivator: {
+    id: 'wealthy_cultivator',
+    name: 'Phú Quý Tu Sĩ',
+    description: 'Tăng 15% Linh Thạch thu được mỗi cấp',
+    cost: 1,
+    maxLevel: 8,
+    effect: { spiritStonesMultPerLevel: 0.15 }
+  },
+  realm_master: {
+    id: 'realm_master',
+    name: 'Mật Cảnh Chuyên Gia',
+    description: 'Thêm 1 vé Mật Cảnh mỗi ngày (mỗi cấp)',
+    cost: 3,
+    maxLevel: 3,
+    effect: { ticketBonusPerLevel: 1 }
+  },
+  reincarnation_qi: {
+    id: 'reincarnation_qi',
+    name: 'Luân Hồi Đạo Tâm',
+    description: 'Bắt đầu với 100 Qi mỗi lần Thăng Thiên (mỗi cấp)',
+    cost: 2,
+    maxLevel: 5,
+    effect: { startingQiPerLevel: 100 }
+  }
+}
+
+export function calcAscensionCost(currentAscensions: number): number {
+  // Cost increases: 10000 * 1.5^n
+  return Math.floor(10000 * Math.pow(1.5, currentAscensions))
+}
+
+

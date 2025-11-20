@@ -2,10 +2,9 @@ import { PlayerModel } from '../models/Player'
 import { ItemModel } from '../models/Item'
 import { UserModel } from '../models/User'
 import { SnapshotModel } from '../models/Snapshot'
-import { getElementMultiplier, REALMS, breakthroughCost, calcTechniqueMultiplier, TECHNIQUE_MAP, TECHNIQUES, calcEquipmentBonus, SHOP_CATALOG, priceWithSoftCap, WORLD_CYCLES, selectRandomCycle, WORLD_EVENTS } from '../../shared/constants'
+import { getElementMultiplier, REALMS, breakthroughCost, calcTechniqueMultiplier, TECHNIQUE_MAP, TECHNIQUES, calcEquipmentBonus, SHOP_CATALOG, priceWithSoftCap, WORLD_CYCLES, selectRandomCycle, WORLD_EVENTS, SECRET_REALMS, ASCENSION_PERKS, calcAscensionCost } from '../../shared/constants'
 import { rateLimit } from '../utils/rateLimit'
 import { SectModel } from '../models/Sect'
-import { SecretRealmModel } from '../models/SecretRealm'
 
 export default defineEventHandler(async (event) => {
     const body = await readBody(event)
@@ -204,7 +203,16 @@ export default defineEventHandler(async (event) => {
                         }
                     }
                     
-                    const rate = ((player.cultivation.baseRate * mult * tech.mult * eq.mult * cycleMult * eventMult) + (tech.add || 0) + (eq.add || 0) + eventAdd)
+                    // Ascension bonuses
+                    let ascensionMult = 1.0
+                    if (player.ascension?.perks) {
+                        const eternalQiPerk = player.ascension.perks.find((p: any) => p.perkId === 'eternal_qi')
+                        if (eternalQiPerk) {
+                            ascensionMult *= (1 + 0.1 * eternalQiPerk.level)
+                        }
+                    }
+                    
+                    const rate = ((player.cultivation.baseRate * mult * tech.mult * eq.mult * cycleMult * eventMult * ascensionMult) + (tech.add || 0) + (eq.add || 0) + eventAdd)
                     const qiGain = Math.floor(dtSeconds * rate)
                     
                     player.attributes.qi = (player.attributes.qi || 0) + qiGain
@@ -700,7 +708,7 @@ export default defineEventHandler(async (event) => {
                     player.secretRealms.lastTicketReset = now
                 }
                 
-                const realms = await SecretRealmModel.find()
+                const realms = Object.values(SECRET_REALMS)
                 return { success: true, message: 'Danh sách Mật Cảnh', data: { realms, tickets: player.secretRealms.tickets, activeRun: player.secretRealms.activeRun } }
             }
 
@@ -708,7 +716,7 @@ export default defineEventHandler(async (event) => {
                 const { realmKey } = payload || {}
                 if (!realmKey) return { success: false, message: 'Thiếu mã Mật Cảnh' }
                 
-                const realm = await SecretRealmModel.findOne({ key: realmKey })
+                const realm = SECRET_REALMS[realmKey]
                 if (!realm) return { success: false, message: 'Mật Cảnh không tồn tại' }
                 
                 if (!player.secretRealms) player.secretRealms = { tickets: 3, activeRun: { realmKey: null, startedAt: null, endsAt: null }, completed: [], lastTicketReset: new Date() }
@@ -741,7 +749,7 @@ export default defineEventHandler(async (event) => {
                 const endsAt = new Date(player.secretRealms.activeRun.endsAt).getTime()
                 if (now < endsAt) return { success: false, message: 'Chưa hoàn thành Mật Cảnh' }
                 
-                const realm = await SecretRealmModel.findOne({ key: player.secretRealms.activeRun.realmKey })
+                const realm = SECRET_REALMS[player.secretRealms.activeRun.realmKey]
                 if (!realm) return { success: false, message: 'Mật Cảnh không tồn tại' }
                 
                 // Calculate rewards
@@ -776,6 +784,108 @@ export default defineEventHandler(async (event) => {
                 player.secretRealms.activeRun = { realmKey: null, startedAt: null, endsAt: null }
                 
                 message = `Hoàn thành ${realm.name}! Nhận: ${qiReward} Qi, ${stonesReward} Linh Thạch, ${herbsReward} Thảo Dược${lootItems.length > 0 ? ', ' + lootItems.join(', ') : ''}`
+                log = message
+                break
+            }
+
+            // Endgame 4.0: Ascension System
+            case 'ASCENSION_INFO': {
+                if (!player.ascension) {
+                    player.ascension = { level: 0, totalPoints: 0, spentPoints: 0, perks: [], totalLifetimeQi: 0 }
+                }
+                const currentQi = player.attributes.qi || 0
+                const requiredQi = calcAscensionCost(player.ascension.level)
+                const canAscend = currentQi >= requiredQi
+                return {
+                    success: true,
+                    data: {
+                        ascensionLevel: player.ascension.level,
+                        totalPoints: player.ascension.totalPoints,
+                        availablePoints: player.ascension.totalPoints - player.ascension.spentPoints,
+                        perks: player.ascension.perks || [],
+                        requiredQi,
+                        currentQi,
+                        canAscend
+                    }
+                }
+            }
+
+            case 'ASCENSION_PERFORM': {
+                if (!player.ascension) {
+                    player.ascension = { level: 0, totalPoints: 0, spentPoints: 0, perks: [], totalLifetimeQi: 0 }
+                }
+                
+                const currentQi = player.attributes.qi || 0
+                const requiredQi = calcAscensionCost(player.ascension.level)
+                
+                if (currentQi < requiredQi) {
+                    return { success: false, message: `Cần ${requiredQi} Qi để Thăng Thiên!` }
+                }
+                
+                // Track lifetime qi
+                player.ascension.totalLifetimeQi += currentQi
+                
+                // Award ascension points (1 point per ascension)
+                player.ascension.level += 1
+                player.ascension.totalPoints += 1
+                
+                // Calculate starting qi from perks
+                let startingQi = 0
+                const reincarnationPerk = player.ascension.perks.find((p: any) => p.perkId === 'reincarnation_qi')
+                if (reincarnationPerk) {
+                    const perkDef = ASCENSION_PERKS.reincarnation_qi
+                    startingQi = (perkDef.effect.startingQiPerLevel || 0) * reincarnationPerk.level
+                }
+                
+                // Reset player state
+                player.realm = { major: 'Luyện Khí', minor: 1, progress: 0, maxProgress: 100 }
+                player.attributes.qi = startingQi
+                player.attributes.body = 10
+                player.attributes.spirit = 10
+                player.attributes.talent = 10
+                player.resources.spiritStones = 0
+                player.resources.herbs = 0
+                player.inventory = []
+                player.equipment = []
+                player.techniques = { unlocked: ['basic'], equippedPassives: [] }
+                player.cultivation = { activeTechnique: 'Cơ Bản Công', baseRate: 1, element: 'none' }
+                
+                message = `Thăng Thiên thành công! Cấp ${player.ascension.level}, nhận 1 điểm Thăng Thiên.`
+                log = message
+                break
+            }
+
+            case 'ASCENSION_UPGRADE_PERK': {
+                const { perkId } = payload || {}
+                if (!perkId || !ASCENSION_PERKS[perkId]) {
+                    return { success: false, message: 'Perk không hợp lệ' }
+                }
+                
+                if (!player.ascension) {
+                    player.ascension = { level: 0, totalPoints: 0, spentPoints: 0, perks: [], totalLifetimeQi: 0 }
+                }
+                
+                const perkDef = ASCENSION_PERKS[perkId]
+                const availablePoints = player.ascension.totalPoints - player.ascension.spentPoints
+                
+                if (availablePoints < perkDef.cost) {
+                    return { success: false, message: 'Không đủ điểm Thăng Thiên' }
+                }
+                
+                let perk = player.ascension.perks.find((p: any) => p.perkId === perkId)
+                if (!perk) {
+                    perk = { perkId, level: 0 }
+                    player.ascension.perks.push(perk)
+                }
+                
+                if (perk.level >= perkDef.maxLevel) {
+                    return { success: false, message: 'Đã đạt cấp tối đa' }
+                }
+                
+                perk.level += 1
+                player.ascension.spentPoints += perkDef.cost
+                
+                message = `Nâng cấp ${perkDef.name} lên cấp ${perk.level}`
                 log = message
                 break
             }

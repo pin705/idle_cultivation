@@ -10,6 +10,7 @@ import TribulationModal from './TribulationModal.vue'
 import SectModal from './SectModal.vue'
 import MissionBoardModal from './MissionBoardModal.vue'
 import SecretRealmsModal from './SecretRealmsModal.vue'
+import AscensionModal from './AscensionModal.vue'
 
 const showInventory = ref(false)
 const showCharacter = ref(false)
@@ -23,8 +24,14 @@ const showMissions = ref(false)
 const showSecretRealms = ref(false)
 
 const secretRealmsRef = ref<InstanceType<typeof SecretRealmsModal> | null>(null)
+const ascensionRef = ref<InstanceType<typeof AscensionModal> | null>(null)
+
 const openSecretRealms = () => {
   secretRealmsRef.value?.open()
+}
+
+const openAscension = () => {
+  ascensionRef.value?.open()
 }
 </script>
 
@@ -60,6 +67,9 @@ const openSecretRealms = () => {
       </button>
       <button @click="openSecretRealms" class="px-2 sm:px-3 py-2 sm:py-3 bg-gradient-to-r from-purple-700 to-purple-900 text-white border border-purple-900 hover:from-purple-600 hover:to-purple-800 text-xs sm:text-sm font-bold transition-colors tracking-wide">
         Mật Cảnh
+      </button>
+      <button @click="openAscension" class="px-2 sm:px-3 py-2 sm:py-3 bg-gradient-to-r from-pink-700 to-red-700 text-white border border-red-900 hover:from-pink-600 hover:to-red-600 text-xs sm:text-sm font-bold transition-colors tracking-wide">
+        Thăng Thiên
       </button>
     </div>
 
@@ -100,6 +110,7 @@ const openSecretRealms = () => {
     </BaseModal>
 
     <SecretRealmsModal ref="secretRealmsRef" />
+    <AscensionModal ref="ascensionRef" />
   </div>
 </template>
 

@@ -58,6 +58,13 @@ export const usePlayerStore = defineStore('player', {
             },
             completed: [] as string[],
             lastTicketReset: null as any
+        },
+        ascension: {
+            level: 0,
+            totalPoints: 0,
+            spentPoints: 0,
+            perks: [] as Array<{ perkId: string; level: number }>,
+            totalLifetimeQi: 0
         }
     }),
 
@@ -80,6 +87,13 @@ export const usePlayerStore = defineStore('player', {
                     multiplier = 0.5
                 }
             }
+            
+            // Apply ascension perks
+            const eternalQiPerk = state.ascension.perks.find(p => p.perkId === 'eternal_qi')
+            if (eternalQiPerk) {
+                multiplier *= (1 + 0.1 * eternalQiPerk.level)
+            }
+            
             // Approximate technique effect for display only
             const tech = calcTechniqueMultiplier(state.cultivation.activeTechnique as any, (state as any).techniques?.equippedPassives || [])
             const rate = state.cultivation.baseRate * multiplier * (tech?.mult || 1) + (tech?.add || 0)

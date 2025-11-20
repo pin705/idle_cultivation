@@ -79,6 +79,16 @@ const PlayerSchema = new mongoose.Schema({
             completed: [String], // keys of completed realms
             lastTicketReset: { type: Date, default: Date.now }
         },
+        ascension: {
+            level: { type: Number, default: 0 },
+            totalPoints: { type: Number, default: 0 },
+            spentPoints: { type: Number, default: 0 },
+            perks: [{
+                perkId: String,
+                level: { type: Number, default: 0 }
+            }],
+            totalLifetimeQi: { type: Number, default: 0 } // Track for ascension cost
+        },
         updatedAt: { type: Date, default: Date.now }
 })
 
