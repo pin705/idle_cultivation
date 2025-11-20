@@ -86,7 +86,7 @@
 
           <div class="item-details">
             <div v-if="shopItem.item.elementTag" class="item-element">
-              <span :class="getElementColor(shopItem.item.elementTag)">
+              <span :class="getElementColorClass(shopItem.item.elementTag)">
                 {{ getElementName(shopItem.item.elementTag) }}
               </span>
             </div>
@@ -146,7 +146,7 @@
           <div class="item-info">
             <div class="item-slot">{{ getSlotName(item.slot) }}</div>
             <div v-if="item.elementTag" class="item-element">
-              <span :class="getElementColor(item.elementTag)">
+              <span :class="getElementColorClass(item.elementTag)">
                 {{ getElementName(item.elementTag) }}
               </span>
             </div>
@@ -174,60 +174,19 @@
 
 <script setup lang="ts">
 import AchievementsTab from './AchievementsTab.vue'
-
-const activeView = ref('shop')
 import { usePlayerStore } from '../../stores/player'
 import { useApiAction } from '../../composables/useApiAction'
+import { SHOP_CATALOG, REALMS } from '../../../shared/constants'
+import { getElementName, getElementColorClass } from '../../utils/game-helpers'
+import { useThemeStore } from '../../stores/theme'
 import Button from '../ui/Button.vue'
 import Card from '../ui/Card.vue'
 import Divider from '../ui/Divider.vue'
 
+const activeView = ref('shop')
 const player = usePlayerStore()
 const themeStore = useThemeStore()
 const { call } = useApiAction()
-
-const SHOP_CATALOG = [
-  // Tier 1 - Common
-  { key: 'iron_sword', name: 'Kiếm Sắt', item: { type: 'equipment', slot: 'weapon', elementTag: 'metal', tier: 'common', baseEffects: { rateAdd: 0.5 } }, basePrice: 100, tier: 1 },
-  { key: 'iron_armor', name: 'Giáp Sắt', item: { type: 'equipment', slot: 'armor', elementTag: 'metal', tier: 'common', baseEffects: { rateMult: 1.02 } }, basePrice: 120, tier: 1 },
-  { key: 'iron_helmet', name: 'Mũ Sắt', item: { type: 'equipment', slot: 'helmet', elementTag: 'metal', tier: 'common', baseEffects: { rateAdd: 0.2 } }, basePrice: 80, tier: 1 },
-  { key: 'iron_boots', name: 'Hài Sắt', item: { type: 'equipment', slot: 'boots', elementTag: 'metal', tier: 'common', baseEffects: { rateAdd: 0.2 } }, basePrice: 80, tier: 1 },
-  { key: 'wooden_staff', name: 'Trượng Gỗ', item: { type: 'equipment', slot: 'weapon', elementTag: 'wood', tier: 'common', baseEffects: { rateAdd: 0.4 } }, basePrice: 90, tier: 1 },
-  { key: 'cloth_robe', name: 'Bào Y Vải', item: { type: 'equipment', slot: 'armor', elementTag: 'wood', tier: 'common', baseEffects: { rateMult: 1.01 } }, basePrice: 100, tier: 1 },
-  { key: 'jade_pendant', name: 'Bội Ngọc Bích', item: { type: 'equipment', slot: 'accessory', elementTag: 'water', tier: 'common', baseEffects: { rateAdd: 0.3 } }, basePrice: 80, tier: 1 },
-  { key: 'basic_talisman', name: 'Bùa Cơ Bản', item: { type: 'equipment', slot: 'talisman', elementTag: 'earth', tier: 'common', baseEffects: { rateMult: 1.01 } }, basePrice: 70, tier: 1 },
-  { key: 'herb_bundle', name: 'Bó Thảo Dược', item: { type: 'material', isStackable: true }, basePrice: 20, tier: 1 },
-  { key: 'spirit_water', name: 'Linh Thủy', item: { type: 'material', isStackable: true }, basePrice: 30, tier: 1 },
-  
-  // Tier 2 - Rare
-  { key: 'steel_blade', name: 'Kiếm Thép', item: { type: 'equipment', slot: 'weapon', elementTag: 'metal', tier: 'rare', baseEffects: { rateAdd: 1.5, rateMult: 1.05 } }, basePrice: 500, tier: 2, minRealm: 'Trúc Cơ' },
-  { key: 'steel_armor', name: 'Giáp Thép', item: { type: 'equipment', slot: 'armor', elementTag: 'metal', tier: 'rare', baseEffects: { rateMult: 1.08 } }, basePrice: 600, tier: 2, minRealm: 'Trúc Cơ' },
-  { key: 'fire_wand', name: 'Trượng Hỏa', item: { type: 'equipment', slot: 'weapon', elementTag: 'fire', tier: 'rare', baseEffects: { rateAdd: 1.2, rateMult: 1.04 } }, basePrice: 480, tier: 2, minRealm: 'Trúc Cơ' },
-  { key: 'water_robe', name: 'Bào Thủy', item: { type: 'equipment', slot: 'armor', elementTag: 'water', tier: 'rare', baseEffects: { rateMult: 1.07 } }, basePrice: 550, tier: 2, minRealm: 'Trúc Cơ' },
-  { key: 'spirit_ring', name: 'Linh Nhẫn', item: { type: 'equipment', slot: 'accessory', elementTag: 'none', tier: 'rare', baseEffects: { rateAdd: 0.8 } }, basePrice: 400, tier: 2, minRealm: 'Trúc Cơ' },
-  { key: 'rare_herb', name: 'Linh Dược Quý', item: { type: 'material', isStackable: true }, basePrice: 100, tier: 2, minRealm: 'Trúc Cơ' },
-  
-  // Tier 3 - Epic
-  { key: 'profound_sword', name: 'Huyền Thiên Kiếm', item: { type: 'equipment', slot: 'weapon', elementTag: 'metal', tier: 'epic', baseEffects: { rateAdd: 3.0, rateMult: 1.10 } }, basePrice: 2000, tier: 3, minRealm: 'Kim Đan' },
-  { key: 'dragon_scale_armor', name: 'Giáp Long Lân', item: { type: 'equipment', slot: 'armor', elementTag: 'earth', tier: 'epic', baseEffects: { rateMult: 1.15 } }, basePrice: 2500, tier: 3, minRealm: 'Kim Đan' },
-  { key: 'phoenix_staff', name: 'Phượng Hoàng Trượng', item: { type: 'equipment', slot: 'weapon', elementTag: 'fire', tier: 'epic', baseEffects: { rateAdd: 2.5, rateMult: 1.08 } }, basePrice: 1900, tier: 3, minRealm: 'Kim Đan' },
-  { key: 'dao_amulet', name: 'Đạo Bội', item: { type: 'equipment', slot: 'accessory', elementTag: 'none', tier: 'epic', baseEffects: { rateAdd: 2.0 } }, basePrice: 1800, tier: 3, minRealm: 'Kim Đan' },
-  { key: 'enlightenment_pill', name: 'Ngộ Đạo Đan', item: { type: 'consumable', isStackable: true }, basePrice: 500, tier: 3, minRealm: 'Kim Đan' },
-  
-  // Tier 4 - Legendary
-  { key: 'immortal_blade', name: 'Tiên Kiếm', item: { type: 'equipment', slot: 'weapon', elementTag: 'metal', tier: 'legendary', baseEffects: { rateAdd: 6.0, rateMult: 1.20 } }, basePrice: 8000, tier: 4, minRealm: 'Nguyên Anh' },
-  { key: 'celestial_armor', name: 'Thiên Giáp', item: { type: 'equipment', slot: 'armor', elementTag: 'none', tier: 'legendary', baseEffects: { rateMult: 1.25 } }, basePrice: 10000, tier: 4, minRealm: 'Nguyên Anh' },
-  { key: 'void_ring', name: 'Hư Không Nhẫn', item: { type: 'equipment', slot: 'accessory', elementTag: 'none', tier: 'legendary', baseEffects: { rateAdd: 4.0, rateMult: 1.10 } }, basePrice: 7000, tier: 4, minRealm: 'Nguyên Anh' },
-  { key: 'artifact_fragment', name: 'Thần Khí Mảnh', item: { type: 'material', isStackable: true }, basePrice: 1000, tier: 4, minRealm: 'Nguyên Anh' },
-  
-  // Tier 5 - Mythic
-  { key: 'chaos_sword', name: 'Hỗn Nguyên Kiếm', item: { type: 'equipment', slot: 'weapon', elementTag: 'none', tier: 'mythic', baseEffects: { rateAdd: 10.0, rateMult: 1.30 } }, basePrice: 30000, tier: 5, minRealm: 'Hóa Thần' },
-  { key: 'primordial_robe', name: 'Thái Sơ Y', item: { type: 'equipment', slot: 'armor', elementTag: 'none', tier: 'mythic', baseEffects: { rateMult: 1.35 } }, basePrice: 35000, tier: 5, minRealm: 'Hóa Thần' },
-  { key: 'dao_heart_crystal', name: 'Đạo Tâm Tinh', item: { type: 'equipment', slot: 'accessory', elementTag: 'none', tier: 'mythic', baseEffects: { rateAdd: 8.0, rateMult: 1.15 } }, basePrice: 28000, tier: 5, minRealm: 'Hóa Thần' },
-  { key: 'ascension_crystal', name: 'Thăng Thiên Tinh', item: { type: 'material', isStackable: true }, basePrice: 5000, tier: 5, minRealm: 'Hóa Thần' }
-]
-
-const REALMS = ['Luyện Khí', 'Trúc Cơ', 'Kim Đan', 'Nguyên Anh', 'Hóa Thần']
 
 const selectedTier = ref(0)
 const selectedType = ref('all')
@@ -297,30 +256,6 @@ const getSlotName = (slot: string) => {
     talisman: 'Bùa'
   }
   return names[slot] || slot
-}
-
-const getElementName = (el: string) => {
-  const names: Record<string, string> = {
-    metal: 'Kim',
-    wood: 'Mộc',
-    water: 'Thủy',
-    fire: 'Hỏa',
-    earth: 'Thổ',
-    none: 'Vô'
-  }
-  return names[el] || el
-}
-
-const getElementColor = (el: string) => {
-  const colors: Record<string, string> = {
-    metal: 'element-metal',
-    wood: 'element-wood',
-    water: 'element-water',
-    fire: 'element-fire',
-    earth: 'element-earth',
-    none: 'element-none'
-  }
-  return colors[el] || 'element-none'
 }
 
 const calculatePrice = (shopItem: any) => {
