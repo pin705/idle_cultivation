@@ -62,6 +62,7 @@ const PlayerSchema = new mongoose.Schema({
             id: { type: mongoose.Schema.Types.ObjectId, ref: 'Sect', default: null },
             contribution: { type: Number, default: 0 }
         },
+        sectBoosts: [String], // Purchased one-time boosts from sect shop
         missions: [{
             key: String,
             assignedAt: Date,
@@ -89,6 +90,13 @@ const PlayerSchema = new mongoose.Schema({
             }],
             totalLifetimeQi: { type: Number, default: 0 } // Track for ascension cost
         },
+        stats: {
+            missionsCompleted: { type: Number, default: 0 },
+            breakthroughsCompleted: { type: Number, default: 0 },
+            tribulationsCompleted: { type: Number, default: 0 }
+        },
+        achievements: [String], // Array of unlocked achievement IDs
+        activeTitle: { type: String, default: null }, // Currently displayed title
         updatedAt: { type: Date, default: Date.now }
 })
 

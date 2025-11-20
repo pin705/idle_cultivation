@@ -41,6 +41,8 @@ export type ActionType =
   | 'ASCENSION_PERFORM'
   | 'ASCENSION_UPGRADE_PERK'
   | 'QI_CONDENSE'
+  | 'EQUIP_ENHANCE'
+  | 'SECT_SHOP_BUY'
 
 export function useApiAction() {
   const player = usePlayerStore()

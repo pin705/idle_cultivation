@@ -2,7 +2,7 @@ import { PlayerModel } from '../models/Player'
 import { ItemModel } from '../models/Item'
 import { UserModel } from '../models/User'
 import { SnapshotModel } from '../models/Snapshot'
-import { getElementMultiplier, REALMS, breakthroughCost, calcTechniqueMultiplier, TECHNIQUE_MAP, TECHNIQUES, calcEquipmentBonus, SHOP_CATALOG, priceWithSoftCap, WORLD_CYCLES, selectRandomCycle, WORLD_EVENTS, SECRET_REALMS, ASCENSION_PERKS, calcAscensionCost } from '../../shared/constants'
+import { getElementMultiplier, REALMS, breakthroughCost, calcTechniqueMultiplier, TECHNIQUE_MAP, TECHNIQUES, calcEquipmentBonus, SHOP_CATALOG, priceWithSoftCap, WORLD_CYCLES, selectRandomCycle, WORLD_EVENTS, SECRET_REALMS, ASCENSION_PERKS, calcAscensionCost, canUnlockTechnique, MISSIONS, MISSION_MAP, calcEnhancementCost, calcEnhancementSuccessRate, getEquipmentSellPrice } from '../../shared/constants'
 import { rateLimit } from '../utils/rateLimit'
 import { SectModel } from '../models/Sect'
 
@@ -212,7 +212,15 @@ export default defineEventHandler(async (event) => {
                         }
                     }
                     
-                    const rate = ((player.cultivation.baseRate * mult * tech.mult * eq.mult * cycleMult * eventMult * ascensionMult) + (tech.add || 0) + (eq.add || 0) + eventAdd)
+                    // Sect rank bonus
+                    let sectMult = 1.0
+                    if (player.sect?.contribution !== undefined) {
+                        const { getSectRank } = await import('../../shared/constants')
+                        const rank = getSectRank(player.sect.contribution)
+                        sectMult = rank.benefits.qiBonus
+                    }
+                    
+                    const rate = ((player.cultivation.baseRate * mult * tech.mult * eq.mult * cycleMult * eventMult * ascensionMult * sectMult) + (tech.add || 0) + (eq.add || 0) + eventAdd)
                     const qiGain = Math.floor(dtSeconds * rate)
                     
                     player.attributes.qi = (player.attributes.qi || 0) + qiGain
@@ -276,6 +284,10 @@ export default defineEventHandler(async (event) => {
                         player.realm.minor += 1
                         player.realm.progress = 0
                         player.realm.maxProgress = Math.floor(maxProgress * 1.5)
+                        
+                        // Track stats
+                        if (!player.stats) player.stats = { missionsCompleted: 0, breakthroughsCompleted: 0, tribulationsCompleted: 0 }
+                        player.stats.breakthroughsCompleted = (player.stats.breakthroughsCompleted || 0) + 1
 
                         // Spirit stone reward for minor breakthrough
                         const realmIndex = REALMS.indexOf(major)
@@ -384,6 +396,12 @@ export default defineEventHandler(async (event) => {
                 const ok = Math.random() < successChance
                 player.tribulation.active = false
                 
+                // Track stats
+                if (!player.stats) player.stats = { missionsCompleted: 0, breakthroughsCompleted: 0, tribulationsCompleted: 0 }
+                if (ok) {
+                    player.stats.tribulationsCompleted = (player.stats.tribulationsCompleted || 0) + 1
+                }
+                
                 // Calculate rewards based on realm
                 const realmIndex = REALMS.indexOf(player.realm.major)
                 const rewardQi = 100 + Math.floor((player.realm.minor || 1) * 20)
@@ -452,22 +470,116 @@ export default defineEventHandler(async (event) => {
                 break
             }
 
+            case 'SECT_SHOP_BUY': {
+                const { itemId } = payload || {}
+                if (!player.sect) return { success: false, message: 'Chưa gia nhập tông môn' }
+                
+                const { SECT_SHOP_ITEMS, getSectRank, TECHNIQUE_MAP } = await import('../../shared/constants')
+                const item = SECT_SHOP_ITEMS.find(i => i.id === itemId)
+                if (!item) return { success: false, message: 'Vật phẩm không tồn tại' }
+                
+                // Check rank requirement
+                const currentRank = getSectRank(player.sect.contribution || 0)
+                const currentRankIndex = (await import('../../shared/constants')).SECT_RANKS.findIndex(r => r.name === currentRank.name)
+                if (currentRankIndex < item.minRank) {
+                    return { success: false, message: 'Chức vị chưa đủ yêu cầu' }
+                }
+                
+                // Check contribution cost
+                if ((player.sect.contribution || 0) < item.cost) {
+                    return { success: false, message: 'Không đủ công hiến' }
+                }
+                
+                // Deduct contribution
+                player.sect.contribution -= item.cost
+                
+                // Grant reward based on type
+                if (item.type === 'technique') {
+                    const techKey = item.value as string
+                    if (!player.techniques?.unlocked) player.techniques = { unlocked: [], equippedPassives: [] }
+                    if (!player.techniques.unlocked.includes(techKey)) {
+                        player.techniques.unlocked.push(techKey)
+                        message = `Đã mua kỹ thuật: ${item.name}`
+                        log = message
+                    } else {
+                        return { success: false, message: 'Đã sở hữu kỹ thuật này' }
+                    }
+                } else if (item.type === 'item') {
+                    // Create equipment item - lookup by key instead of id
+                    const itemKey = item.value as string
+                    const itemData = SHOP_CATALOG.find(s => s.key === itemKey)
+                    if (!itemData) return { success: false, message: 'Vật phẩm không hợp lệ' }
+                    
+                    const newItem = await ItemModel.create({
+                        name: itemData.name,
+                        tier: itemData.tier || 'legendary',
+                        slot: itemData.item?.slot || 'weapon',
+                        element: itemData.item?.elementTag || 'neutral',
+                        stats: itemData.item?.baseEffects || {},
+                        affixes: [],
+                        enhanceLevel: 0,
+                        type: 'equipment'
+                    })
+                    player.inventory.push({ itemId: newItem._id, count: 1, uid: newItem._id.toString() })
+                    message = `Đã mua: ${item.name}`
+                    log = message
+                } else if (item.type === 'boost') {
+                    // Boost items are one-time purchases that apply permanent multipliers
+                    // Track in a new field: player.sectBoosts
+                    if (!player.sectBoosts) player.sectBoosts = []
+                    if (player.sectBoosts.includes(itemId)) {
+                        return { success: false, message: 'Đã mua boost này rồi' }
+                    }
+                    player.sectBoosts.push(itemId)
+                    message = `Đã mua: ${item.name}`
+                    log = message
+                }
+                
+                break
+            }
+
             // Missions
             case 'MISSION_LIST': {
-                const missions = [
-                    { key: 'gather_herbs', duration: 60_000, reward: { herbs: 3 } },
-                    { key: 'guard_gate', duration: 120_000, reward: { spiritStones: 50 } }
-                ]
-                return { success: true, message: 'Danh sách nhiệm vụ', data: { missions } }
+                // Filter missions by realm requirements
+                const playerRealmIndex = REALMS.indexOf(player.realm.major)
+                const availableMissions = MISSIONS.filter(m => {
+                    if (!m.requirements?.minRealm) return true
+                    const reqIndex = REALMS.indexOf(m.requirements.minRealm as any)
+                    return playerRealmIndex >= reqIndex
+                }).map(m => ({
+                    key: m.key,
+                    name: m.name,
+                    description: m.description,
+                    type: m.type,
+                    duration: m.duration,
+                    rewards: m.rewards,
+                    requirements: m.requirements
+                }))
+                return { success: true, message: 'Danh sách nhiệm vụ', data: { missions: availableMissions } }
             }
             case 'MISSION_ASSIGN': {
                 const { key } = payload || {}
-                const catalog: any = { gather_herbs: { duration: 60_000, reward: { herbs: 3 } }, guard_gate: { duration: 120_000, reward: { spiritStones: 50 } } }
-                const m = catalog[key]
-                if (!m) return { success: false, message: 'Nhiệm vụ không hợp lệ' }
+                const missionDef = MISSION_MAP[key]
+                if (!missionDef) return { success: false, message: 'Nhiệm vụ không hợp lệ' }
+                
+                // Check realm requirements
+                if (missionDef.requirements?.minRealm) {
+                    const reqIndex = REALMS.indexOf(missionDef.requirements.minRealm as any)
+                    const playerIndex = REALMS.indexOf(player.realm.major)
+                    if (playerIndex < reqIndex) {
+                        return { success: false, message: 'Chưa đủ cảnh giới' }
+                    }
+                }
+                
                 player.missions = player.missions || []
-                player.missions.push({ key, assignedAt: new Date(), duration: m.duration, reward: m.reward, claimed: false })
-                message = 'Đã nhận nhiệm vụ.'
+                player.missions.push({ 
+                    key, 
+                    assignedAt: new Date(), 
+                    duration: missionDef.duration, 
+                    reward: missionDef.rewards, 
+                    claimed: false 
+                })
+                message = `Đã nhận nhiệm vụ: ${missionDef.name}`
                 log = message
                 break
             }
@@ -478,9 +590,32 @@ export default defineEventHandler(async (event) => {
                 const readyAt = new Date(m.assignedAt).getTime() + m.duration
                 if (Date.now() < readyAt) return { success: false, message: 'Chưa hoàn thành' }
                 m.claimed = true
+                
+                // Track stats
+                if (!player.stats) player.stats = { missionsCompleted: 0, breakthroughsCompleted: 0, tribulationsCompleted: 0 }
+                player.stats.missionsCompleted = (player.stats.missionsCompleted || 0) + 1
+                
+                // Apply sect boost multipliers
+                let contributionMult = 1.0
+                let stoneMult = 1.0
+                if (player.sectBoosts) {
+                    if (player.sectBoosts.includes('sect_boost_1')) contributionMult = 1.1
+                    if (player.sectBoosts.includes('sect_boost_2')) stoneMult = 1.1
+                }
+                
+                // Award mission contribution if in sect
+                if (player.sect?.id && m.reward?.spiritStones) {
+                    const contributionGain = Math.floor((m.reward.spiritStones || 0) * 0.1 * contributionMult)
+                    player.sect.contribution = (player.sect.contribution || 0) + contributionGain
+                }
+                
                 if (m.reward?.herbs) player.resources.herbs = (player.resources.herbs || 0) + m.reward.herbs
-                if (m.reward?.spiritStones) player.resources.spiritStones = (player.resources.spiritStones || 0) + m.reward.spiritStones
-                message = 'Đã nhận thưởng nhiệm vụ.'
+                if (m.reward?.spiritStones) {
+                    const stones = Math.floor((m.reward.spiritStones || 0) * stoneMult)
+                    player.resources.spiritStones = (player.resources.spiritStones || 0) + stones
+                }
+                if (m.reward?.qi) player.attributes.qi = (player.attributes.qi || 0) + m.reward.qi
+                message = `Đã nhận thưởng nhiệm vụ: +${Math.floor((m.reward.spiritStones || 0) * stoneMult)} Linh Thạch, +${m.reward.herbs || 0} Thảo Dược, +${m.reward.qi || 0} Qi`
                 log = message
                 break
             }
@@ -557,7 +692,17 @@ export default defineEventHandler(async (event) => {
                 if (!entry) return { success: false, message: 'Mặt hàng không tồn tại' }
                 const purchased = ((player as any).shopState ||= { purchased: {} }).purchased
                 const count = purchased[key] || 0
-                const price = priceWithSoftCap(entry.basePrice, count)
+                let price = priceWithSoftCap(entry.basePrice, count)
+                
+                // Apply sect shop discount
+                if (player.sect?.contribution !== undefined) {
+                    const { getSectRank } = await import('../../shared/constants')
+                    const rank = getSectRank(player.sect.contribution)
+                    if (rank.benefits.shopDiscount) {
+                        price = Math.floor(price * (1 - rank.benefits.shopDiscount / 100))
+                    }
+                }
+                
                 const total = price * (qty || 1)
                 if ((player.resources.spiritStones || 0) < total) return { success: false, message: 'Không đủ Linh Thạch' }
                 player.resources.spiritStones -= total
@@ -590,13 +735,15 @@ export default defineEventHandler(async (event) => {
                 if (idx < 0) return { success: false, message: 'Không tìm thấy vật phẩm' }
                 const inv = player.inventory[idx]
                 const item = await ItemModel.findById(inv.itemId)
-                const basePrice = Math.max(10, (item?.tier === 'common' ? 20 : 50))
-                const sellPrice = Math.floor(basePrice * 0.5) * (qty || 1)
+                const enhanceLevel = inv.enhanceLevel || 0
+                const sellPrice = item?.type === 'equipment' 
+                    ? getEquipmentSellPrice(item.tier || 'common', enhanceLevel) * (qty || 1)
+                    : Math.floor(10 * (qty || 1))
                 player.resources.spiritStones += sellPrice
                 // remove
                 if ((inv.count || 1) > (qty || 1)) inv.count -= (qty || 1)
                 else player.inventory.splice(idx, 1)
-                message = 'Đã bán vật phẩm.'
+                message = `Đã bán vật phẩm: +${sellPrice} Linh Thạch`
                 log = message
                 break
             }
@@ -620,12 +767,54 @@ export default defineEventHandler(async (event) => {
                 break
             }
 
+            case 'EQUIP_ENHANCE': {
+                const { slot } = payload || {}
+                if (!slot) return { success: false, message: 'Thiếu ô trang bị' }
+                const eqIdx = player.equipment?.findIndex((e: any) => e.slot === slot) ?? -1
+                if (eqIdx < 0) return { success: false, message: 'Không có trang bị ở ô này' }
+                const eq = player.equipment[eqIdx]
+                const currentLevel = eq.enhanceLevel || 0
+                
+                if (currentLevel >= 10) return { success: false, message: 'Đã đạt cấp tối đa (+10)' }
+                
+                const cost = calcEnhancementCost(currentLevel)
+                if ((player.resources.spiritStones || 0) < cost) {
+                    return { success: false, message: `Không đủ Linh Thạch (cần ${cost})` }
+                }
+                
+                player.resources.spiritStones -= cost
+                const successRate = calcEnhancementSuccessRate(currentLevel)
+                const success = Math.random() < successRate
+                
+                if (success) {
+                    eq.enhanceLevel = currentLevel + 1
+                    message = `Cường hóa thành công! Trang bị +${eq.enhanceLevel}`
+                } else {
+                    // On failure at +6 or higher, equipment can break (downgrade 1 level)
+                    if (currentLevel >= 6) {
+                        eq.enhanceLevel = Math.max(0, currentLevel - 1)
+                        message = `Cường hóa thất bại! Trang bị giảm xuống +${eq.enhanceLevel}`
+                    } else {
+                        message = `Cường hóa thất bại! Trang bị không thay đổi.`
+                    }
+                }
+                log = message
+                break
+            }
+
             case 'TECH_UNLOCK': {
                 const { id } = payload || {}
                 if (!id || !(id in TECHNIQUE_MAP)) return { success: false, message: 'Kỹ thuật không hợp lệ' }
                 if (!player.techniques) player.techniques = { unlocked: [], equippedPassives: [] }
                 if (player.techniques.unlocked.includes(id)) return { success: false, message: 'Đã sở hữu kỹ thuật này' }
+                
                 const def = (TECHNIQUE_MAP as any)[id]
+                
+                // Check realm requirements
+                if (!canUnlockTechnique(def, player.realm.major, player.realm.minor, player.techniques.unlocked)) {
+                    return { success: false, message: 'Chưa đủ cảnh giới hoặc thiếu kỹ thuật tiên quyết' }
+                }
+                
                 const costStones = def.cost.spiritStones || 0
                 const costHerbs = def.cost.herbs || 0
                 if ((player.resources.spiritStones || 0) < costStones || (player.resources.herbs || 0) < costHerbs) {
