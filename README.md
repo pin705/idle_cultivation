@@ -8,8 +8,6 @@ Make sure to install dependencies:
 
 ```bash
 # npm
-npm install
-
 # pnpm
 pnpm install
 
@@ -28,19 +26,12 @@ Start the development server on `http://localhost:3000`:
 # npm
 npm run dev
 
-# pnpm
-pnpm dev
-
 # yarn
 yarn dev
-
 # bun
 bun run dev
-```
 
 ## Production
-
-Build the application for production:
 
 ```bash
 # npm

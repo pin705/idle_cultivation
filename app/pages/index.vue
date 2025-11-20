@@ -63,18 +63,7 @@
       <button @click="player.gatherQi(10)" class="px-8 py-3 bg-ink-black text-paper-white text-lg font-bold rounded hover:bg-gray-800 transition-all duration-300 border-2 border-transparent hover:border-seal-red active:scale-95">
         Thổ Nạp (+10 Qi)
       </button>
-      <div class="mb-6">
-        <p class="mb-2 font-bold">Túi Đồ:</p>
-        <div class="grid grid-cols-5 gap-2">
-            <div v-for="slot in player.inventory" :key="slot._id" class="p-2 border border-gray-300 rounded bg-white text-xs flex flex-col items-center justify-center h-16">
-                <span class="font-bold">{{ slot.itemId?.name || '???' }}</span>
-                <span class="text-gray-500">x{{ slot.count }}</span>
-            </div>
-            <button @click="player.findItem()" class="p-2 border border-dashed border-gray-400 rounded bg-gray-50 text-xs text-gray-500 hover:bg-gray-100 flex flex-col items-center justify-center h-16">
-                + Tìm Vật Phẩm
-            </button>
-        </div>
-      </div>
+        <CultivationMenu />
 
       <div class="flex gap-4 justify-center mt-6">
         <button @click="player.saveGame()" class="px-4 py-2 bg-gray-200 text-ink-black rounded hover:bg-gray-300 transition-colors text-sm font-bold border border-gray-400">
@@ -91,7 +80,7 @@
       </div>
 
       <div class="mt-4 text-center">
-        <button @click="clear" class="text-xs text-red-500 hover:underline">Đăng Xuất</button>
+        <button @click="logout" :disabled="loggingOut" class="text-xs text-red-500 hover:underline">{{ loggingOut ? 'Đang thoát…' : 'Đăng Xuất' }}</button>
       </div>
     </div>
 
@@ -106,17 +95,21 @@ import '../assets/css/main.css'
 import { usePlayerStore } from '../stores/player'
 import { useGameLoop } from '../composables/useGameLoop'
 import GameLog from '../components/GameLog.vue'
+// @ts-ignore - Vue SFC typing resolved at build time
+import CultivationMenu from '../components/CultivationMenu.vue'
+import { useApiAction } from '../composables/useApiAction'
 
-const { loggedIn, user, clear } = useUserSession()
+const { loggedIn, user, clear, fetch: fetchSession } = useUserSession()
 const player = usePlayerStore()
+const { call } = useApiAction()
+const loggingOut = ref(false)
 
 // Auto-load or redirect
 onMounted(async () => {
   if (loggedIn.value) {
     try {
-      const response = await $fetch('/api/load') as any
+      const response = await call('LOAD') as any
       if (response.success) {
-        player.loadFromData(response.player)
         // Check offline progress after load
         player.checkOfflineProgress()
       } else if (response.notFound) {
@@ -137,13 +130,13 @@ useGameLoop((dt) => {
   }
 })
 
-const getElementName = (el) => {
-  const names = { metal: 'Kim', wood: 'Mộc', water: 'Thủy', fire: 'Hỏa', earth: 'Thổ', none: 'Vô' }
+const getElementName = (el: string) => {
+  const names: Record<string, string> = { metal: 'Kim', wood: 'Mộc', water: 'Thủy', fire: 'Hỏa', earth: 'Thổ', none: 'Vô' }
   return names[el] || el
 }
 
-const getElementColor = (el) => {
-  const colors = {
+const getElementColor = (el: string) => {
+  const colors: Record<string, string> = {
     metal: 'text-gray-600',
     wood: 'text-green-600',
     water: 'text-blue-600',
@@ -152,5 +145,17 @@ const getElementColor = (el) => {
     none: 'text-gray-400'
   }
   return colors[el] || 'text-black'
+}
+
+async function logout() {
+  try {
+    loggingOut.value = true
+    await call('AUTH_LOGOUT')
+    await fetchSession()
+    clear()
+    navigateTo('/login')
+  } finally {
+    loggingOut.value = false
+  }
 }
 </script>

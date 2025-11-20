@@ -1,3 +1,5 @@
+import { useApiAction } from '../composables/useApiAction'
+const { call } = useApiAction()
 <script setup lang="ts">
 const name = ref('')
 const selectedDao = ref('')
@@ -37,12 +39,9 @@ const createCharacter = async () => {
   }
 
   try {
-    const response = await $fetch('/api/character/create', {
-      method: 'POST',
-      body: {
-        name: name.value,
-        dao: selectedDao.value
-      }
+    const response = await call('CREATE_CHARACTER', {
+      name: name.value,
+      dao: selectedDao.value
     }) as any
 
     if (response.success) {

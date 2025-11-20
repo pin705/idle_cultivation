@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { useApiAction } from '../composables/useApiAction'
 
 export const usePlayerStore = defineStore('player', {
     state: () => ({
@@ -91,12 +92,10 @@ export const usePlayerStore = defineStore('player', {
 
         async attemptBreakthrough() {
             try {
+                const { call } = useApiAction()
                 await this.saveGame()
 
-                const response = await $fetch('/api/action', {
-                    method: 'POST',
-                    body: { type: 'BREAKTHROUGH' }
-                }) as any
+                const response = await call('BREAKTHROUGH') as any
 
                 if (response.success) {
                     if (response.player) {
@@ -115,10 +114,8 @@ export const usePlayerStore = defineStore('player', {
 
         async findItem() {
             try {
-                const response = await $fetch('/api/action', {
-                    method: 'POST',
-                    body: { type: 'FIND_ITEM' }
-                }) as any
+                const { call } = useApiAction()
+                const response = await call('FIND_ITEM') as any
 
                 if (response.success) {
                     if (response.player) {
@@ -141,7 +138,8 @@ export const usePlayerStore = defineStore('player', {
                 this.world.cycleTimer = 0
                 const elements = ['metal', 'wood', 'water', 'fire', 'earth']
                 const currentIndex = elements.indexOf(this.world.element)
-                this.world.element = elements[(currentIndex + 1) % elements.length]
+                const nextEl = elements[(currentIndex + 1) % elements.length] as string
+                this.world.element = nextEl || 'metal'
             }
         },
 
@@ -154,20 +152,15 @@ export const usePlayerStore = defineStore('player', {
 
         async saveGame() {
             try {
-                const response = await $fetch('/api/action', {
-                    method: 'POST',
-                    body: {
-                        type: 'SAVE',
-                        payload: {
-                            qi: this.attributes.qi,
-                            body: this.attributes.body,
-                            spirit: this.attributes.spirit,
-                            talent: this.attributes.talent,
-                            resources: this.resources,
-                            cultivation: this.cultivation,
-                            world: this.world
-                        }
-                    }
+                const { call } = useApiAction()
+                const response = await call('SAVE', {
+                    qi: this.attributes.qi,
+                    body: this.attributes.body,
+                    spirit: this.attributes.spirit,
+                    talent: this.attributes.talent,
+                    resources: this.resources,
+                    cultivation: this.cultivation,
+                    world: this.world
                 }) as any
 
                 if (response.success) {
@@ -180,9 +173,9 @@ export const usePlayerStore = defineStore('player', {
 
         async loadGame() {
             try {
-                const response = await $fetch('/api/load') as any
+                const { call } = useApiAction()
+                const response = await call('LOAD') as any
                 if (response.success) {
-                    this.loadFromData(response.player)
                     this.checkOfflineProgress()
                     this.addLog('Đã tải game.')
                 } else {
@@ -204,19 +197,18 @@ export const usePlayerStore = defineStore('player', {
             if (data.world) {
                 this.world = data.world
             }
+            // Ensure progress aligns with qi to fix bar inconsistency
+            if (this.realm && typeof this.attributes?.qi === 'number') {
+                this.realm.progress = Math.min(this.attributes.qi, this.realm.maxProgress || 100)
+            }
         },
 
         async checkOfflineProgress() {
             try {
-                const response = await $fetch('/api/action', {
-                    method: 'POST',
-                    body: { type: 'OFFLINE_CALC' }
-                }) as any
+                const { call } = useApiAction()
+                const response = await call('OFFLINE_CALC') as any
 
                 if (response.success) {
-                    if (response.player) {
-                        this.loadFromData(response.player)
-                    }
                     if (response.message !== 'Chưa đủ thời gian bế quan.') {
                         this.addLog(response.message)
                         alert(response.message)

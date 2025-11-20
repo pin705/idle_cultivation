@@ -4,18 +4,16 @@ const username = ref('')
 const password = ref('')
 const error = ref('')
 
+import { useApiAction } from '../composables/useApiAction'
 const { loggedIn, user, fetch: fetchSession } = useUserSession()
+const { call } = useApiAction()
 
 const handleSubmit = async () => {
   error.value = ''
   try {
-    const endpoint = isLogin.value ? '/api/auth/login' : '/api/auth/register'
-    const response = await $fetch(endpoint, {
-      method: 'POST',
-      body: {
-        username: username.value,
-        password: password.value
-      }
+    const response = await call(isLogin.value ? 'AUTH_LOGIN' : 'AUTH_REGISTER', {
+      username: username.value,
+      password: password.value
     }) as any
 
     if (response.success) {

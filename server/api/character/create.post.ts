@@ -14,7 +14,8 @@ export default defineEventHandler(async (event) => {
     }
 
     // Check if player already exists
-    const existingPlayer = await PlayerModel.findOne({ userId: session.user.id })
+    const userId = (session as any).user.id || (session as any).user._id
+    const existingPlayer = await PlayerModel.findOne({ userId })
     if (existingPlayer) {
         return { success: false, message: 'Nhân vật đã tồn tại' }
     }
@@ -47,7 +48,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const player = await PlayerModel.create({
-        userId: session.user.id,
+        userId,
         name,
         realm: {
             major: 'Luyện Khí',

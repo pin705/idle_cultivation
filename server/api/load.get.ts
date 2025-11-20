@@ -7,7 +7,8 @@ export default defineEventHandler(async (event) => {
     }
 
     // Load player linked to user
-    const player = await PlayerModel.findOne({ userId: session.user.id }).populate('inventory.itemId')
+    const userId = (session as any).user.id || (session as any).user._id
+    const player = await PlayerModel.findOne({ userId }).populate('inventory.itemId')
 
     if (!player) {
         return { success: false, message: 'Không tìm thấy nhân vật', notFound: true }

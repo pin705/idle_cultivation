@@ -15,8 +15,9 @@ export default defineEventHandler(async (event) => {
     }
 
     let player = null as any
-    if (session.user) {
-        player = await PlayerModel.findOne({ userId: session.user.id }).populate('inventory.itemId')
+    if (session && (session as any).user) {
+        const userId = (session as any).user.id || (session as any).user._id
+        player = await PlayerModel.findOne({ userId }).populate('inventory.itemId')
     }
 
     let message = ''
@@ -55,7 +56,8 @@ export default defineEventHandler(async (event) => {
             case 'CREATE_CHARACTER': {
                 const { name, dao } = payload || {}
                 if (!name || !dao) return { success: false, message: 'Thiếu tên hoặc đạo' }
-                const existingPlayer = await PlayerModel.findOne({ userId: session.user.id })
+                const userId = (session as any).user.id || (session as any).user._id
+                const existingPlayer = await PlayerModel.findOne({ userId })
                 if (existingPlayer) return { success: false, message: 'Nhân vật đã tồn tại' }
 
                 let attributes = { qi: 10, body: 10, spirit: 10, talent: 10 }
@@ -75,7 +77,7 @@ export default defineEventHandler(async (event) => {
                         cultivation.element = 'water'; cultivation.activeTechnique = 'Ngũ Hành Quyết'; break
                 }
                 const newPlayer = await PlayerModel.create({
-                    userId: session.user.id,
+                    userId,
                     name,
                     realm: { major: 'Luyện Khí', minor: 1, progress: 0, maxProgress: 100 },
                     attributes,
