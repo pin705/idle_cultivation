@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { colors, borderRadius, shadows, spacing } from '../../styles/design-tokens'
+import { useThemeStore } from '../../stores/theme'
 
 interface Props {
   title?: string
@@ -14,92 +14,65 @@ const props = withDefaults(defineProps<Props>(), {
   shadow: true,
   hoverable: false
 })
+
+const themeStore = useThemeStore()
+
+const paddingClasses = {
+  none: '',
+  sm: 'p-2',
+  md: 'p-4',
+  lg: 'p-6'
+}
 </script>
 
 <template>
-  <div :class="['card', `card-padding-${padding}`, { 'card-shadow': shadow, 'card-hoverable': hoverable }]">
-    <div v-if="title || subtitle || $slots.header" class="card-header">
+  <div 
+    :class="[
+      'border-2 rounded-lg overflow-hidden transition-all duration-200',
+      shadow ? 'shadow' : '',
+      hoverable ? 'hover:-translate-y-1 hover:shadow-lg cursor-pointer' : ''
+    ]"
+    :style="{
+      backgroundColor: themeStore.colors.bgPaper,
+      borderColor: themeStore.colors.borderPrimary
+    }">
+    <div 
+      v-if="title || subtitle || $slots.header" 
+      class="px-4 py-3 border-b"
+      :style="{
+        backgroundColor: themeStore.colors.bgSecondary,
+        borderColor: themeStore.colors.borderSecondary
+      }">
       <slot name="header">
-        <div v-if="title" class="card-title">{{ title }}</div>
-        <div v-if="subtitle" class="card-subtitle">{{ subtitle }}</div>
+        <div v-if="title" 
+             class="text-lg font-semibold"
+             :style="{ color: themeStore.colors.textPrimary }">
+          {{ title }}
+        </div>
+        <div v-if="subtitle" 
+             class="text-sm mt-1"
+             :style="{ color: themeStore.colors.textSecondary }">
+          {{ subtitle }}
+        </div>
       </slot>
     </div>
     
-    <div class="card-body">
+    <div :class="['flex-1', paddingClasses[padding]]">
       <slot />
     </div>
     
-    <div v-if="$slots.footer" class="card-footer">
+    <div 
+      v-if="$slots.footer" 
+      class="px-4 py-3 border-t"
+      :style="{
+        backgroundColor: themeStore.colors.bgSecondary,
+        borderColor: themeStore.colors.borderSecondary
+      }">
       <slot name="footer" />
     </div>
   </div>
 </template>
 
 <style scoped>
-.card {
-  background-color: v-bind('colors.bg.paper');
-  border: 2px solid v-bind('colors.border.dark');
-  border-radius: v-bind('borderRadius.lg');
-  overflow: hidden;
-  transition: all 200ms ease;
-}
-
-.card-shadow {
-  box-shadow: v-bind('shadows.base');
-}
-
-.card-hoverable:hover {
-  transform: translateY(-2px);
-  box-shadow: v-bind('shadows.lg');
-  border-color: v-bind('colors.accent[900]');
-}
-
-/* Padding variants */
-.card-padding-none {
-  padding: 0;
-}
-
-.card-padding-sm > .card-body {
-  padding: v-bind('spacing.sm');
-}
-
-.card-padding-md > .card-body {
-  padding: v-bind('spacing.md');
-}
-
-.card-padding-lg > .card-body {
-  padding: v-bind('spacing.lg');
-}
-
-/* Header */
-.card-header {
-  padding: v-bind('spacing.md');
-  border-bottom: 1px solid v-bind('colors.border.light');
-  background-color: v-bind('colors.bg.secondary');
-}
-
-.card-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: v-bind('colors.text.primary');
-  margin: 0;
-}
-
-.card-subtitle {
-  font-size: 0.875rem;
-  color: v-bind('colors.text.secondary');
-  margin-top: 0.25rem;
-}
-
-/* Body */
-.card-body {
-  flex: 1;
-}
-
-/* Footer */
-.card-footer {
-  padding: v-bind('spacing.md');
-  border-top: 1px solid v-bind('colors.border.light');
-  background-color: v-bind('colors.bg.secondary');
-}
+/* Minimal custom styles */
 </style>

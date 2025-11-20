@@ -3,12 +3,13 @@ import { ref, computed } from 'vue'
 import { usePlayerStore } from '../../stores/player'
 import { useApiAction } from '../../composables/useApiAction'
 import { TECHNIQUES, canUnlockTechnique } from '../../../shared/constants'
-import { colors } from '../../styles/design-tokens'
+import { useThemeStore } from '../../stores/theme'
 import Card from '../ui/Card.vue'
 import Button from '../ui/Button.vue'
 import Divider from '../ui/Divider.vue'
 
 const player = usePlayerStore()
+const themeStore = useThemeStore()
 const { call } = useApiAction()
 const loading = ref(false)
 const selectedTech = ref<string | null>(null)

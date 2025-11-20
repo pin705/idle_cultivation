@@ -2,13 +2,14 @@
 import { ref, computed } from 'vue'
 import { usePlayerStore } from '../../stores/player'
 import { useApiAction } from '../../composables/useApiAction'
-import { colors } from '../../styles/design-tokens'
+import { useThemeStore } from '../../stores/theme'
 import { SET_BONUS, calcEquipmentBonus, calcEnhancementCost, calcEnhancementSuccessRate, getEquipmentSellPrice } from '../../../shared/constants'
 import Card from '../ui/Card.vue'
 import Button from '../ui/Button.vue'
 import Divider from '../ui/Divider.vue'
 
 const player = usePlayerStore()
+const themeStore = useThemeStore()
 const { call } = useApiAction()
 const loading = ref(false)
 const selectedSlot = ref<string | null>(null)

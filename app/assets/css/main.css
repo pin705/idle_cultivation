@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Thủy Mặc (Ink Wash) Theme - Base Styles */
+@layer base {
+  * {
+    @apply box-border;
+  }
+  
+  html {
+    @apply antialiased;
+  }
+  
+  body {
+    @apply font-serif text-base leading-normal;
+  }
+}
+
+/* Custom Utilities */
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  /* Ink brush effect for borders */
+  .border-ink {
+    border-width: 2px;
+    border-style: solid;
+  }
+  
+  /* Paper texture effect */
+  .bg-paper {
+    background-color: #fffef9;
+  }
+  
+  .bg-aged-paper {
+    background-color: #f5f4ef;
+  }
+}
+
+/* Animation utilities */
+@layer utilities {
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes slideIn {
+    from { transform: translateY(-10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  .animate-slide-in {
+    animation: slideIn 0.3s ease-in-out;
+  }
+}
