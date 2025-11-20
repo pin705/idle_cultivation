@@ -5,6 +5,7 @@ import { SnapshotModel } from '../models/Snapshot'
 import { getElementMultiplier, REALMS, breakthroughCost, calcTechniqueMultiplier, TECHNIQUE_MAP, TECHNIQUES, calcEquipmentBonus, SHOP_CATALOG, priceWithSoftCap, WORLD_CYCLES, selectRandomCycle, WORLD_EVENTS, SECRET_REALMS, ASCENSION_PERKS, calcAscensionCost, canUnlockTechnique, MISSIONS, MISSION_MAP, calcEnhancementCost, calcEnhancementSuccessRate, getEquipmentSellPrice } from '../../shared/constants'
 import { rateLimit } from '../utils/rateLimit'
 import { SectModel } from '../models/Sect'
+import { calculateCultivationRate, calculateMaxPossibleQiGain } from '../utils/cultivation'
 
 export default defineEventHandler(async (event) => {
     const body = await readBody(event)
@@ -137,14 +138,8 @@ export default defineEventHandler(async (event) => {
 
                 // Only validate if positive gain and significant time passed
                 if (claimedQiGain > 0 && timeDiffSeconds > 1) {
-                    // Calculate max possible gain based on cultivation base rate + active technique multiplier + world element multiplier
-                    // This is a simplified check. For now, let's trust but verify loosely.
-                    // Real implementation would replicate the client's multiplier logic here.
-                    const mult = getElementMultiplier(player.cultivation.element, player.world.element)
-                    const tech = calcTechniqueMultiplier(player.cultivation.activeTechnique, player.techniques?.equippedPassives || [])
-                    const eq = calcEquipmentBonus(player.equipment || [])
-                    const maxRate = (player.cultivation.baseRate * mult * tech.mult * eq.mult) + (tech.add || 0) + (eq.add || 0)
-                    const maxPossibleGain = Math.floor(timeDiffSeconds * maxRate + 5)
+                    // Use utility function to calculate max possible gain
+                    const maxPossibleGain = calculateMaxPossibleQiGain(player, timeDiffSeconds)
 
                     if (claimedQiGain > maxPossibleGain) {
                         // Cap the gain
@@ -179,48 +174,8 @@ export default defineEventHandler(async (event) => {
                 const dtSeconds = (tickNow.getTime() - lastUpdate.getTime()) / 1000
                 
                 if (dtSeconds > 0) {
-                    // Calculate qi gain with all multipliers
-                    const mult = getElementMultiplier(player.cultivation.element, player.world.element)
-                    const tech = calcTechniqueMultiplier(player.cultivation.activeTechnique, player.techniques?.equippedPassives || [])
-                    const eq = calcEquipmentBonus(player.equipment || [])
-                    
-                    // World cycle multiplier
-                    let cycleMult = 1.0
-                    if (player.world?.currentCycle && player.world.currentCycle in WORLD_CYCLES) {
-                        cycleMult = WORLD_CYCLES[player.world.currentCycle as keyof typeof WORLD_CYCLES].effect.qiMult || 1.0
-                    }
-                    
-                    // World event multiplier
-                    let eventMult = 1.0
-                    let eventAdd = 0
-                    if (player.world?.activeEvent?.type && player.world.activeEvent.type in WORLD_EVENTS) {
-                        const now = Date.now()
-                        const eventEnds = player.world.activeEvent.endsAt ? new Date(player.world.activeEvent.endsAt).getTime() : 0
-                        if (now < eventEnds) {
-                            const eventDef = WORLD_EVENTS[player.world.activeEvent.type as keyof typeof WORLD_EVENTS]
-                            eventMult = eventDef.effect.qiMult || 1.0
-                            eventAdd = eventDef.effect.qiAdd || 0
-                        }
-                    }
-                    
-                    // Ascension bonuses
-                    let ascensionMult = 1.0
-                    if (player.ascension?.perks) {
-                        const eternalQiPerk = player.ascension.perks.find((p: any) => p.perkId === 'eternal_qi')
-                        if (eternalQiPerk) {
-                            ascensionMult *= (1 + 0.1 * eternalQiPerk.level)
-                        }
-                    }
-                    
-                    // Sect rank bonus
-                    let sectMult = 1.0
-                    if (player.sect?.contribution !== undefined) {
-                        const { getSectRank } = await import('../../shared/constants')
-                        const rank = getSectRank(player.sect.contribution)
-                        sectMult = rank.benefits.qiBonus
-                    }
-                    
-                    const rate = ((player.cultivation.baseRate * mult * tech.mult * eq.mult * cycleMult * eventMult * ascensionMult * sectMult) + (tech.add || 0) + (eq.add || 0) + eventAdd)
+                    // Use utility function to calculate cultivation rate
+                    const { rate } = calculateCultivationRate(player)
                     const qiGain = Math.floor(dtSeconds * rate)
                     
                     player.attributes.qi = (player.attributes.qi || 0) + qiGain
@@ -278,47 +233,41 @@ export default defineEventHandler(async (event) => {
                 if (player.attributes.qi >= requiredQi) {
                     player.attributes.qi -= requiredQi
 
-                    // Advance realm logic
-                    if (progress + 10 >= maxProgress) {
-                        // Minor breakthrough
-                        player.realm.minor += 1
-                        player.realm.progress = 0
-                        player.realm.maxProgress = Math.floor(maxProgress * 1.5)
-                        
-                        // Track stats
-                        if (!player.stats) player.stats = { missionsCompleted: 0, breakthroughsCompleted: 0, tribulationsCompleted: 0 }
-                        player.stats.breakthroughsCompleted = (player.stats.breakthroughsCompleted || 0) + 1
+                    // Advance realm logic - always do minor breakthrough since we have enough Qi
+                    // Minor breakthrough
+                    player.realm.minor += 1
+                    player.realm.progress = 0
+                    player.realm.maxProgress = Math.floor(maxProgress * 1.5)
+                    
+                    // Track stats
+                    if (!player.stats) player.stats = { missionsCompleted: 0, breakthroughsCompleted: 0, tribulationsCompleted: 0 }
+                    player.stats.breakthroughsCompleted = (player.stats.breakthroughsCompleted || 0) + 1
 
-                        // Spirit stone reward for minor breakthrough
-                        const realmIndex = REALMS.indexOf(major)
-                        const minorReward = 20 * (realmIndex + 1) // 20/40/60/80/100 per realm tier
-                        player.resources.spiritStones += minorReward
+                    // Spirit stone reward for minor breakthrough
+                    const realmIndex = REALMS.indexOf(major)
+                    const minorReward = 20 * (realmIndex + 1) // 20/40/60/80/100 per realm tier
+                    player.resources.spiritStones += minorReward
 
-                        // Major breakthrough check
-                        if (player.realm.minor > 9) {
-                            const currentIndex = REALMS.indexOf(major)
-                            if (currentIndex < REALMS.length - 1) {
-                                player.realm.major = REALMS[currentIndex + 1]
-                                player.realm.minor = 1
-                                player.realm.maxProgress *= 2
-                                // Major breakthrough bonus
-                                const majorReward = 100 * (currentIndex + 2) // 200/300/400/500
-                                player.resources.spiritStones += majorReward
-                                message = `Chúc mừng! Bạn đã đột phá lên ${player.realm.major}! +${majorReward + minorReward} Linh Thạch`
-                            }
-                        } else {
-                            message = `Đột phá tiểu cảnh giới thành công! +${minorReward} Linh Thạch`
+                    // Major breakthrough check
+                    if (player.realm.minor > 9) {
+                        const currentIndex = REALMS.indexOf(major)
+                        if (currentIndex < REALMS.length - 1) {
+                            player.realm.major = REALMS[currentIndex + 1]
+                            player.realm.minor = 1
+                            player.realm.maxProgress *= 2
+                            // Major breakthrough bonus
+                            const majorReward = 100 * (currentIndex + 2) // 200/300/400/500
+                            player.resources.spiritStones += majorReward
+                            message = `Chúc mừng! Bạn đã đột phá lên ${player.realm.major}! +${majorReward + minorReward} Linh Thạch`
                         }
-
-                        // Stat boost
-                        player.attributes.body += 5
-                        player.attributes.spirit += 5
-                        player.attributes.talent += 1
                     } else {
-                        // Just progress
-                        player.realm.progress += 10
-                        message = 'Tu luyện tinh tấn.'
+                        message = `Đột phá tiểu cảnh giới thành công! +${minorReward} Linh Thạch`
                     }
+
+                    // Stat boost
+                    player.attributes.body += 5
+                    player.attributes.spirit += 5
+                    player.attributes.talent += 1
                 } else {
                     success = false
                     message = 'Không đủ linh khí để đột phá!'

@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { usePlayerStore } from '../../stores/player'
 import { useApiAction } from '../../composables/useApiAction'
 import { TECHNIQUES, canUnlockTechnique } from '../../../shared/constants'
+import { getElementDisplayName } from '../../utils/game-helpers'
 import { useThemeStore } from '../../stores/theme'
 import Card from '../ui/Card.vue'
 import Button from '../ui/Button.vue'
@@ -69,23 +70,6 @@ async function equipTechnique(id: string) {
     loading.value = false
   }
 }
-
-function getElementColor(element?: string): string {
-  if (!element) return colors.element.neutral
-  return colors.element[element as keyof typeof colors.element] || colors.element.neutral
-}
-
-function getElementName(element?: string): string {
-  if (!element) return ''
-  const names: Record<string, string> = {
-    fire: '🔥 Hỏa',
-    water: '💧 Thủy',
-    wood: '🌿 Mộc',
-    metal: '⚙️ Kim',
-    earth: '🪨 Thổ'
-  }
-  return names[element] || element
-}
 </script>
 
 <template>
@@ -111,8 +95,8 @@ function getElementName(element?: string): string {
               <!-- Header -->
               <div class="tech-header">
                 <div class="tech-name">{{ tech.name }}</div>
-                <div v-if="tech.element" class="tech-element" :style="{ color: getElementColor(tech.element) }">
-                  {{ getElementName(tech.element) }}
+                <div v-if="tech.element" class="tech-element">
+                  {{ getElementDisplayName(tech.element) }}
                 </div>
               </div>
               
@@ -207,8 +191,8 @@ function getElementName(element?: string): string {
               <!-- Header -->
               <div class="tech-header">
                 <div class="tech-name">{{ tech.name }}</div>
-                <div v-if="tech.element" class="tech-element" :style="{ color: getElementColor(tech.element) }">
-                  {{ getElementName(tech.element) }}
+                <div v-if="tech.element" class="tech-element">
+                  {{ getElementDisplayName(tech.element) }}
                 </div>
               </div>
               

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { usePlayerStore } from '../../stores/player'
 import { useApiAction } from '../../composables/useApiAction'
-import { REALMS, TECHNIQUES, WORLD_CYCLES } from '../../../shared/constants'
+import { REALMS, TECHNIQUES } from '../../../shared/constants'
+import { getCycleName, getEventName, getElementDisplayName } from '../../utils/game-helpers'
 import Card from '../ui/Card.vue'
 import Button from '../ui/Button.vue'
 import Divider from '../ui/Divider.vue'
@@ -25,27 +26,6 @@ const worldCycle = computed(() => {
 const worldEvent = computed(() => {
   return player?.world?.activeEvent?.type || null
 })
-
-function getCycleName(cycle: string) {
-  const cycleNames: any = {
-    normal: 'Bình Thường',
-    metal: 'Kim',
-    wood: 'Mộc',
-    water: 'Thủy',
-    fire: 'Hỏa',
-    earth: 'Thổ'
-  }
-  return cycleNames[cycle] || 'Không Xác Định'
-}
-
-function getEventName(eventType: string) {
-  const eventNames: any = {
-    qi_surge: 'Linh Khí Dâng Trào',
-    tribulation_storm: 'Bão Thiên Kiếp',
-    sect_blessing: 'Phúc Lành Tông Môn'
-  }
-  return eventNames[eventType] || 'Sự Kiện Không Xác Định'
-}
 
 const realmTimeline = computed(() => {
   const currentRealm = player?.realm?.major || 'Luyện Khí'
@@ -89,6 +69,11 @@ async function condenseQi() {
 const logs = computed(() => {
   return (player?.logs || []).slice(-10).reverse()
 })
+
+function getSectBonus() {
+  // Helper function for displaying sect bonus percentage
+  return 0 // Placeholder, will be calculated based on sect rank
+}
 </script>
 
 <template>
@@ -120,8 +105,8 @@ const logs = computed(() => {
           <div v-if="activeTechnique" class="technique-display">
             <div class="technique-header">
               <div class="technique-name">{{ activeTechnique.name }}</div>
-              <div class="technique-element" :style="{ color: getElementColor(activeTechnique.element) }">
-                {{ activeTechnique.element }}
+              <div class="technique-element">
+                {{ getElementDisplayName(activeTechnique.element) }}
               </div>
             </div>
             <div class="technique-desc">{{ activeTechnique.description }}</div>
