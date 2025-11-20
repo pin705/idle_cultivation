@@ -12,9 +12,8 @@ export default {
         extend: {
             colors: {
                 'ink-black': '#1a1a1a',
-                'paper-white': '#f0f0f0',
-                'seal-red': '#b22222',
-                'jade-green': '#00a86b',
+                'paper-white': '#f8f8f8',
+                'seal-red': '#8b0000',
             },
             fontFamily: {
                 serif: ['"Noto Serif SC"', 'serif'],

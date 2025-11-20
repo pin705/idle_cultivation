@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { useApiAction } from '../composables/useApiAction'
+import { calcTechniqueMultiplier } from '~~/shared/constants'
 
 export const usePlayerStore = defineStore('player', {
     state: () => ({
@@ -58,7 +59,6 @@ export const usePlayerStore = defineStore('player', {
                 }
             }
             // Approximate technique effect for display only
-            const { calcTechniqueMultiplier } = require('../../shared/constants')
             const tech = calcTechniqueMultiplier(state.cultivation.activeTechnique as any, (state as any).techniques?.equippedPassives || [])
             const rate = state.cultivation.baseRate * multiplier * (tech?.mult || 1) + (tech?.add || 0)
             return rate.toFixed(1)

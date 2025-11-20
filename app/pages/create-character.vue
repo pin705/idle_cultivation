@@ -1,6 +1,7 @@
+<script setup lang="ts">
 import { useApiAction } from '../composables/useApiAction'
 const { call } = useApiAction()
-<script setup lang="ts">
+
 const name = ref('')
 const selectedDao = ref('')
 const error = ref('')

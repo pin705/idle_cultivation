@@ -1,91 +1,80 @@
 <template>
-  <div class="min-h-screen bg-paper-white text-ink-black font-serif flex flex-col items-center justify-center relative overflow-hidden">
+  <div class="min-h-screen bg-paper-white text-ink-black font-serif relative overflow-hidden">
     <!-- Background Ink Effect -->
     <div class="absolute inset-0 opacity-10 pointer-events-none">
       <div class="absolute top-0 left-0 w-full h-full bg-[url('https://raw.githubusercontent.com/tailwindlabs/tailwindcss/master/docs/assets/img/background-pattern.svg')]"></div>
     </div>
 
-    <h1 class="text-6xl font-bold mb-8 z-10 tracking-widest drop-shadow-lg">
-      Tu Tiên Nhàn Rỗi
-    </h1>
-    
-    <div class="z-10 p-8 border-4 border-ink-black rounded-lg bg-white/80 backdrop-blur-sm shadow-2xl max-w-md w-full text-center">
-      <div class="mb-6">
-        <h2 class="text-2xl font-bold mb-2">{{ player.name }}</h2>
-        <p class="text-xl text-seal-red font-bold">{{ player.formattedRealm }}</p>
-      </div>
-
-      <div class="mb-6 p-4 bg-gray-100 rounded border border-gray-300">
-        <div class="flex justify-between items-center mb-2">
-          <span class="font-bold">Thiên Địa Chi Khí:</span>
-          <span class="capitalize font-bold" :class="getElementColor(player.world.element)">
-            {{ getElementName(player.world.element) }}
-          </span>
-        </div>
-        <div class="w-full bg-gray-300 h-2 rounded-full overflow-hidden">
-           <div class="bg-gray-500 h-full transition-all duration-1000 ease-linear" :style="{ width: (player.world.cycleTimer / player.world.cycleDuration * 100) + '%' }"></div>
-        </div>
-      </div>
-
-      <div class="mb-6">
-        <p class="mb-2 font-bold">Công Pháp Đang Vận:</p>
-        <div class="grid grid-cols-5 gap-2">
-          <button 
-            v-for="el in ['metal', 'wood', 'water', 'fire', 'earth']" 
-            :key="el"
-            @click="player.cultivation.element = el"
-            class="p-2 rounded border-2 transition-all duration-200 text-xs font-bold capitalize"
-            :class="[
-              player.cultivation.element === el ? 'border-ink-black bg-gray-200 scale-110' : 'border-transparent bg-white hover:bg-gray-50',
-              getElementColor(el)
-            ]"
-          >
-            {{ getElementName(el) }}
-          </button>
-        </div>
-      </div>
-
-      <div class="mb-6 space-y-2">
-        <div class="flex justify-between">
-          <span>Linh Khí (Qi):</span>
-          <span class="font-mono">{{ Math.floor(player.attributes.qi) }} / {{ player.realm.maxProgress }}</span>
-        </div>
-        <div class="w-full bg-gray-300 h-4 rounded-full overflow-hidden border border-ink-black">
-          <div class="bg-jade-green h-full transition-all duration-200" :style="{ width: (player.realm.progress / player.realm.maxProgress * 100) + '%' }"></div>
-        </div>
-        <div class="text-sm text-gray-600">Tốc độ: {{ player.qiRate }}</div>
-      </div>
-
-      <p class="text-lg mb-6 italic">
-        "Đại đạo vô hình, sinh dục thiên địa..."
-      </p>
-      
-      <button @click="player.gatherQi(10)" class="px-8 py-3 bg-ink-black text-paper-white text-lg font-bold rounded hover:bg-gray-800 transition-all duration-300 border-2 border-transparent hover:border-seal-red active:scale-95">
-        Thổ Nạp (+10 Qi)
-      </button>
-        <CultivationMenu />
-
-      <div class="flex gap-4 justify-center mt-6">
-        <button @click="player.saveGame()" class="px-4 py-2 bg-gray-200 text-ink-black rounded hover:bg-gray-300 transition-colors text-sm font-bold border border-gray-400">
-          Lưu Game
-        </button>
-        <button @click="player.loadGame()" class="px-4 py-2 bg-gray-200 text-ink-black rounded hover:bg-gray-300 transition-colors text-sm font-bold border border-gray-400">
-          Tải Game
-        </button>
-      </div>
-      
-      <div class="mt-6">
-        <p class="mb-2 font-bold">Nhật Ký:</p>
-        <GameLog />
-      </div>
-
-      <div class="mt-4 text-center">
-        <button @click="logout" :disabled="loggingOut" class="text-xs text-red-500 hover:underline">{{ loggingOut ? 'Đang thoát…' : 'Đăng Xuất' }}</button>
-      </div>
+    <!-- Header -->
+    <div class="relative z-10 text-center py-4 sm:py-6 border-b border-ink-black bg-white/90 backdrop-blur-sm shadow-lg">
+      <h1 class="text-3xl sm:text-5xl font-bold tracking-widest">Tu Tiên Nhàn Rỗi</h1>
+      <p class="text-xs sm:text-sm text-gray-600 mt-1">Phiên bản 0.0.1 · Ngũ Hành Cộng Hưởng</p>
     </div>
+    
+    <!-- Main Layout: 2 Columns -->
+    <div class="relative z-10 container mx-auto px-2 sm:px-4 py-4 sm:py-6 grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6 max-w-7xl">
+      
+      <!-- Left Column: Game Info & Actions -->
+      <div class="lg:col-span-2 space-y-3 sm:space-y-6">
+        
+        <!-- Character Info Card -->
+        <div class="p-4 sm:p-6  bg-white/90 backdrop-blur-sm shadow-lg">
+          <div class="text-center mb-4">
+            <h2 class="text-2xl sm:text-3xl font-bold mb-1">{{ player.name }}</h2>
+            <p class="text-lg sm:text-xl text-seal-red font-bold">{{ player.formattedRealm }}</p>
+          </div>
 
-    <div class="absolute bottom-4 text-sm text-gray-500">
-      Phiên bản 0.0.1 - Ngũ Hành Cộng Hưởng
+          <div class="mb-4 p-3 sm:p-4 bg-gray-50">
+            <div class="flex justify-between items-center mb-2 text-sm sm:text-base">
+              <span class="font-bold">Thiên Địa Chi Khí:</span>
+              <span class="capitalize font-bold" :class="getElementColor(player.world.element)">
+                {{ getElementName(player.world.element) }}
+              </span>
+            </div>
+            <div class="w-full bg-gray-300 h-1.5 sm:h-2 overflow-hidden">
+               <div class="bg-gray-600 h-full transition-all duration-1000 ease-linear" :style="{ width: (player.world.cycleTimer / player.world.cycleDuration * 100) + '%' }"></div>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <p class="mb-2 font-bold text-center text-sm sm:text-base">Công Pháp Đang Tu:</p>
+            <div class="text-center p-2 bg-gray-100 border border-gray-300">
+              <span class="font-bold text-base sm:text-lg">{{ player.cultivation.activeTechnique }}</span>
+            </div>
+          </div>
+
+          <div class="mb-4 space-y-2">
+            <div class="flex justify-between text-sm sm:text-base">
+              <span>Linh Khí (Qi):</span>
+              <span class="font-mono">{{ Math.floor(player.attributes.qi) }} / {{ player.realm.maxProgress }}</span>
+            </div>
+            <div class="w-full bg-gray-300 h-3 sm:h-4 overflow-hidden border border-ink-black">
+              <div class="bg-gradient-to-r from-yellow-600 to-yellow-500 h-full transition-all duration-200" :style="{ width: (player.realm.progress / player.realm.maxProgress * 100) + '%' }"></div>
+            </div>
+            <div class="text-xs sm:text-sm text-gray-600 text-center">Tốc độ tu luyện: {{ player.qiRate }} khí/giây</div>
+          </div>
+
+          <p class="text-center text-sm sm:text-base italic text-gray-600 border-t border-gray-200 pt-3">
+            "Đại đạo vô hình, sinh dục thiên địa..."
+          </p>
+        </div>
+
+        <!-- Cultivation Menu Card -->
+        <div class="p-4 sm:p-6  bg-white/90 backdrop-blur-sm shadow-lg">
+          <h3 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-center pb-2 border-b border-gray-300">Tu Luyện & Quản Lý</h3>
+          <CultivationMenu />
+        </div>
+      </div>
+
+      <!-- Right Column: Fixed Game Log -->
+      <div class="lg:col-span-1">
+        <div class="lg:sticky lg:top-6">
+          <div class="p-3 sm:p-4  bg-white/90 backdrop-blur-sm shadow-lg">
+            <h3 class="text-lg sm:text-xl font-bold mb-2 sm:mb-3 text-center pb-2 border-b border-gray-300">Nhật Ký Tu Luyện</h3>
+            <GameLog />
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -102,7 +91,6 @@ import { useApiAction } from '../composables/useApiAction'
 const { loggedIn, user, clear, fetch: fetchSession } = useUserSession()
 const player = usePlayerStore()
 const { call } = useApiAction()
-const loggingOut = ref(false)
 
 // Auto-load or redirect
 onMounted(async () => {
@@ -121,6 +109,19 @@ onMounted(async () => {
   } else {
     navigateTo('/login')
   }
+})
+
+// Auto-save every 5 seconds
+let saveInterval: any
+onMounted(() => {
+  saveInterval = setInterval(() => {
+    if (loggedIn.value) {
+      player.saveGame()
+    }
+  }, 5000)
+})
+onUnmounted(() => {
+  if (saveInterval) clearInterval(saveInterval)
 })
 
 // Start game loop
@@ -145,17 +146,5 @@ const getElementColor = (el: string) => {
     none: 'text-gray-400'
   }
   return colors[el] || 'text-black'
-}
-
-async function logout() {
-  try {
-    loggingOut.value = true
-    await call('AUTH_LOGOUT')
-    await fetchSession()
-    clear()
-    navigateTo('/login')
-  } finally {
-    loggingOut.value = false
-  }
 }
 </script>

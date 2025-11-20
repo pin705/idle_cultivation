@@ -4,27 +4,7 @@ import { UserModel } from '../models/User'
 import { SnapshotModel } from '../models/Snapshot'
 import { getElementMultiplier, REALMS, breakthroughCost, calcTechniqueMultiplier, TECHNIQUE_MAP, TECHNIQUES, calcEquipmentBonus, SHOP_CATALOG, priceWithSoftCap } from '../../shared/constants'
 import { rateLimit } from '../utils/rateLimit'
-import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto'
 import { SectModel } from '../models/Sect'
-
-async function hashPassword(password: string): Promise<string> {
-    const salt = randomBytes(16)
-    const hash = scryptSync(password, salt, 64)
-    return `${salt.toString('hex')}:${hash.toString('hex')}`
-}
-
-async function verifyPassword(password: string, stored: string): Promise<boolean> {
-    try {
-        const [saltHex, hashHex] = stored.split(':')
-        if (!saltHex || !hashHex) return false
-        const salt = Buffer.from(saltHex, 'hex')
-        const expected = Buffer.from(hashHex, 'hex')
-        const actual = scryptSync(password, salt, 64)
-        return timingSafeEqual(actual, expected)
-    } catch {
-        return false
-    }
-}
 
 export default defineEventHandler(async (event) => {
     const body = await readBody(event)

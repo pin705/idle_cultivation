@@ -22,33 +22,33 @@ const showMissions = ref(false)
 </script>
 
 <template>
-  <div class="mt-6">
-    <div class="flex gap-3 justify-center">
-      <button @click="showCharacter = true" class="px-4 py-2 bg-white border-2 border-ink-black rounded hover:bg-gray-50 text-sm font-bold">
+  <div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+      <button @click="showCharacter = true" class="px-2 sm:px-3 py-2 sm:py-3 bg-white border border-ink-black hover:bg-gray-100 text-xs sm:text-sm font-bold transition-colors tracking-wide">
         Nhân Vật
       </button>
-      <button @click="showInventory = true" class="px-4 py-2 bg-white border-2 border-ink-black rounded hover:bg-gray-50 text-sm font-bold">
+      <button @click="showInventory = true" class="px-2 sm:px-3 py-2 sm:py-3 bg-white border border-ink-black hover:bg-gray-100 text-xs sm:text-sm font-bold transition-colors tracking-wide">
         Túi Đồ
       </button>
-      <button @click="showTechnique = true" class="px-4 py-2 bg-white border-2 border-ink-black rounded hover:bg-gray-50 text-sm font-bold">
+      <button @click="showTechnique = true" class="px-2 sm:px-3 py-2 sm:py-3 bg-white border border-ink-black hover:bg-gray-100 text-xs sm:text-sm font-bold transition-colors tracking-wide">
         Công Pháp
       </button>
-      <button @click="showEquipment = true" class="px-4 py-2 bg-white border-2 border-ink-black rounded hover:bg-gray-50 text-sm font-bold">
+      <button @click="showEquipment = true" class="px-2 sm:px-3 py-2 sm:py-3 bg-white border border-ink-black hover:bg-gray-100 text-xs sm:text-sm font-bold transition-colors tracking-wide">
         Trang Bị
       </button>
-      <button @click="showShop = true" class="px-4 py-2 bg-white border-2 border-ink-black rounded hover:bg-gray-50 text-sm font-bold">
+      <button @click="showShop = true" class="px-2 sm:px-3 py-2 sm:py-3 bg-white border border-ink-black hover:bg-gray-100 text-xs sm:text-sm font-bold transition-colors tracking-wide">
         Cửa Hàng
       </button>
-      <button @click="showCrafting = true" class="px-4 py-2 bg-white border-2 border-ink-black rounded hover:bg-gray-50 text-sm font-bold">
+      <button @click="showCrafting = true" class="px-2 sm:px-3 py-2 sm:py-3 bg-white border border-ink-black hover:bg-gray-100 text-xs sm:text-sm font-bold transition-colors tracking-wide">
         Chế Tạo
       </button>
-      <button @click="showTribulation = true" class="px-4 py-2 bg-white border-2 border-ink-black rounded hover:bg-gray-50 text-sm font-bold">
+      <button @click="showTribulation = true" class="px-2 sm:px-3 py-2 sm:py-3 bg-white border border-ink-black hover:bg-gray-100 text-xs sm:text-sm font-bold transition-colors tracking-wide">
         Thiên Kiếp
       </button>
-      <button @click="showSect = true" class="px-4 py-2 bg-white border-2 border-ink-black rounded hover:bg-gray-50 text-sm font-bold">
+      <button @click="showSect = true" class="px-2 sm:px-3 py-2 sm:py-3 bg-white border border-ink-black hover:bg-gray-100 text-xs sm:text-sm font-bold transition-colors tracking-wide">
         Tông Môn
       </button>
-      <button @click="showMissions = true" class="px-4 py-2 bg-white border-2 border-ink-black rounded hover:bg-gray-50 text-sm font-bold">
+      <button @click="showMissions = true" class="px-2 sm:px-3 py-2 sm:py-3 bg-white border border-ink-black hover:bg-gray-100 text-xs sm:text-sm font-bold transition-colors tracking-wide">
         Nhiệm Vụ
       </button>
     </div>
