@@ -113,7 +113,16 @@ onMounted(async () => {
 
 // Auto-save every 5 seconds
 let saveInterval: any
+let tickInterval: any
 onMounted(() => {
+  // Server tick every 1 second for accurate cultivation
+  tickInterval = setInterval(() => {
+    if (loggedIn.value) {
+      player.serverTick()
+    }
+  }, 1000)
+  
+  // Auto-save every 5 seconds
   saveInterval = setInterval(() => {
     if (loggedIn.value) {
       player.saveGame()
@@ -121,6 +130,7 @@ onMounted(() => {
   }, 5000)
 })
 onUnmounted(() => {
+  if (tickInterval) clearInterval(tickInterval)
   if (saveInterval) clearInterval(saveInterval)
 })
 

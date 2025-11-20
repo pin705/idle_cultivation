@@ -152,10 +152,22 @@ export const usePlayerStore = defineStore('player', {
         },
 
         tick(dt: number) {
-            // Called every game tick (e.g. 1 second)
+            // Client-side visual updates only (for smooth animation)
+            // Server handles actual cultivation calculation
             this.cycleWorldElement(dt)
-            const production = this.cultivation.baseRate * (dt / 1000)
-            this.gatherQi(production)
+        },
+
+        async serverTick() {
+            // Call server to update qi and world state authoritatively
+            try {
+                const { call } = useApiAction()
+                const response = await call('TICK') as any
+                if (response?.player) {
+                    this.loadFromData(response.player)
+                }
+            } catch (e) {
+                // Silent fail to avoid spam
+            }
         },
 
         async saveGame() {

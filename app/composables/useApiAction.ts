@@ -3,6 +3,7 @@ import { usePlayerStore } from '../stores/player'
 export type ActionType =
   | 'LOAD'
   | 'SAVE'
+  | 'TICK'
   | 'OFFLINE_CALC'
   | 'BREAKTHROUGH'
   | 'FIND_ITEM'

@@ -172,10 +172,45 @@ export default defineEventHandler(async (event) => {
                 log = message
                 break
 
-            case 'OFFLINE_CALC':
-                const now = new Date()
+            case 'TICK': {
+                // Server-authoritative cultivation tick
+                const tickNow = new Date()
+                const lastUpdate = new Date(player.updatedAt)
+                const dtSeconds = (tickNow.getTime() - lastUpdate.getTime()) / 1000
+                
+                if (dtSeconds > 0) {
+                    // Calculate qi gain
+                    const mult = getElementMultiplier(player.cultivation.element, player.world.element)
+                    const tech = calcTechniqueMultiplier(player.cultivation.activeTechnique, player.techniques?.equippedPassives || [])
+                    const eq = calcEquipmentBonus(player.equipment || [])
+                    const rate = (player.cultivation.baseRate * mult * tech.mult * eq.mult) + (tech.add || 0) + (eq.add || 0)
+                    const qiGain = Math.floor(dtSeconds * rate)
+                    
+                    player.attributes.qi = (player.attributes.qi || 0) + qiGain
+                    
+                    // Cycle world element
+                    player.world.cycleTimer = (player.world.cycleTimer || 0) + dtSeconds
+                    if (player.world.cycleTimer >= (player.world.cycleDuration || 10)) {
+                        player.world.cycleTimer = 0
+                        const elements = ['metal', 'wood', 'water', 'fire', 'earth']
+                        const currentIndex = elements.indexOf(player.world.element || 'metal')
+                        const nextEl = elements[(currentIndex + 1) % elements.length]
+                        player.world.element = nextEl || 'metal'
+                    }
+                    
+                    // Update progress bar
+                    player.realm.progress = Math.min(player.attributes.qi, player.realm.maxProgress)
+                    player.updatedAt = tickNow
+                }
+                
+                // Return without message to avoid log spam
+                break
+            }
+
+            case 'OFFLINE_CALC': {
+                const offlineNow = new Date()
                 const lastSaved = new Date(player.updatedAt)
-                const diffSeconds = (now.getTime() - lastSaved.getTime()) / 1000
+                const diffSeconds = (offlineNow.getTime() - lastSaved.getTime()) / 1000
 
                 if (diffSeconds > 60) { // Minimum 60 seconds for offline progress
                     const baseRate = player.cultivation.baseRate
@@ -186,13 +221,14 @@ export default defineEventHandler(async (event) => {
                     const offlineGain = Math.floor(diffSeconds * ((baseRate * tech.mult * eq.mult) + (tech.add || 0) + (eq.add || 0)) * mult)
 
                     player.attributes.qi += offlineGain
-                    player.updatedAt = now
+                    player.updatedAt = offlineNow
                     message = `Bạn đã bế quan ${Math.floor(diffSeconds)} giây và thu được ${offlineGain} linh khí.`
                 } else {
                     message = 'Chưa đủ thời gian bế quan.'
                 }
                 log = message
                 break
+            }
 
             case 'BREAKTHROUGH':
                 const { major, minor, progress, maxProgress } = player.realm
