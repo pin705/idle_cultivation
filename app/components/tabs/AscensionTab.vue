@@ -185,6 +185,7 @@ import Card from '../ui/Card.vue'
 import Divider from '../ui/Divider.vue'
 
 const player = usePlayerStore()
+const themeStore = useThemeStore()
 const { call } = useApiAction()
 
 const ASCENSION_PERKS = [

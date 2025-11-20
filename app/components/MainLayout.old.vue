@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { usePlayerStore } from '../stores/player'
 import { useThemeStore } from '../stores/theme'
 import { REALMS, getSectRank } from '../../shared/constants'
-import { ICONS, SPACING, SHADOWS, TYPOGRAPHY } from '../../shared/ui-constants'
+import { ICONS, SPACING, SHADOWS, TYPOGRAPHY } from '../utils/ui-constants'
 import Tabs from './ui/Tabs.vue'
 import SettingsModal from './SettingsModal.vue'
 

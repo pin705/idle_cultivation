@@ -56,8 +56,7 @@ const selectTab = (tabId: string) => {
         }
       }"
     >
-      <span v-if="tab.icon" class="text-xl md:text-2xl">{{ tab.icon }}</span>
-      <span class="hidden sm:inline">{{ tab.label }}</span>
+      <span>{{ tab.label }}</span>
       <span 
         v-if="tab.badge" 
         class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-xs font-semibold rounded-full"

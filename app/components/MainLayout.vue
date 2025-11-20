@@ -3,7 +3,6 @@ import { ref, computed } from 'vue'
 import { usePlayerStore } from '../stores/player'
 import { useThemeStore } from '../stores/theme'
 import { REALMS, getSectRank } from '../../shared/constants'
-import { ICONS, UI_TEXT } from '../../shared/ui-constants'
 import Tabs from './ui/Tabs.vue'
 import SettingsModal from './SettingsModal.vue'
 
@@ -14,14 +13,14 @@ const sidebarOpen = ref(true)
 const showSettings = ref(false)
 
 const tabs = [
-  { id: 'cultivation', label: UI_TEXT.cultivation, icon: ICONS.cultivation },
-  { id: 'equipment', label: UI_TEXT.equipment, icon: ICONS.equipment },
-  { id: 'techniques', label: UI_TEXT.techniques, icon: ICONS.techniques },
-  { id: 'sect', label: UI_TEXT.sect, icon: ICONS.sect },
-  { id: 'missions', label: UI_TEXT.missions, icon: ICONS.missions },
-  { id: 'shop', label: UI_TEXT.shop, icon: ICONS.shop },
-  { id: 'achievements', label: UI_TEXT.achievements, icon: ICONS.achievements },
-  { id: 'ascension', label: UI_TEXT.ascension, icon: ICONS.ascension }
+  { id: 'cultivation', label: 'Tu Luyện' },
+  { id: 'equipment', label: 'Trang Bị' },
+  { id: 'techniques', label: 'Kỹ Năng' },
+  { id: 'sect', label: 'Tông Môn' },
+  { id: 'missions', label: 'Nhiệm Vụ' },
+  { id: 'shop', label: 'Cửa Hàng' },
+  { id: 'achievements', label: 'Thành Tựu' },
+  { id: 'ascension', label: 'Thăng Thiên' }
 ]
 
 const realmProgress = computed(() => {
@@ -52,16 +51,13 @@ const closeSettings = () => {
   showSettings.value = false
 }
 
-function getSlotIcon(slot: string): string {
-  const icons: Record<string, string> = {
-    weapon: ICONS.weapon,
-    armor: ICONS.armor,
-    helmet: ICONS.helmet,
-    boots: ICONS.boots,
-    accessory: ICONS.accessory,
-    talisman: ICONS.talisman
-  }
-  return icons[slot] || '?'
+const slots = {
+  weapon: 'Vũ Khí',
+  armor: 'Giáp',
+  helmet: 'Mũ',
+  boots: 'Giày',
+  accessory: 'Phụ Kiện',
+  talisman: 'Bùa'
 }
 </script>
 
@@ -107,13 +103,13 @@ function getSlotIcon(slot: string): string {
             @click="openSettings">
             {{ player.player?.name?.[0] || '?' }}
             <div class="absolute inset-0 rounded-full bg-black/70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <span class="text-2xl">{{ ICONS.settings }}</span>
+              <span class="text-sm">⚙</span>
             </div>
           </div>
           <div class="flex-1">
             <div class="text-xl font-bold mb-1"
                  :style="{ color: themeStore.colors.textPrimary }">
-              {{ player.player?.name || UI_TEXT.player }}
+              {{ player.player?.name || 'Tu Sĩ' }}
             </div>
             <div v-if="player.player?.activeTitle" 
                  class="text-sm font-semibold"
@@ -128,7 +124,7 @@ function getSlotIcon(slot: string): string {
              :style="{ borderColor: themeStore.colors.borderSecondary }">
           <div class="text-xs font-semibold uppercase tracking-wide mb-2"
                :style="{ color: themeStore.colors.textSecondary }">
-            {{ UI_TEXT.realm }}
+            Cảnh Giới
           </div>
           <div class="text-2xl font-bold mb-1 flex items-baseline gap-2"
                :style="{ color: themeStore.colors.textPrimary }">
@@ -160,7 +156,7 @@ function getSlotIcon(slot: string): string {
              :style="{ borderColor: themeStore.colors.borderSecondary }">
           <div class="text-xs font-semibold uppercase tracking-wide mb-2"
                :style="{ color: themeStore.colors.textSecondary }">
-            {{ UI_TEXT.qi }}
+            Linh Khí
           </div>
           <div class="text-2xl font-bold font-mono mb-1"
                :style="{ color: themeStore.colors.textPrimary }">
@@ -177,7 +173,7 @@ function getSlotIcon(slot: string): string {
              :style="{ borderColor: themeStore.colors.borderSecondary }">
           <div class="text-xs font-semibold uppercase tracking-wide mb-2"
                :style="{ color: themeStore.colors.textSecondary }">
-            {{ UI_TEXT.resources }}
+            Tài Nguyên
           </div>
           <div class="grid grid-cols-2 gap-2">
             <div class="flex items-center gap-2 p-2 rounded border"
@@ -185,8 +181,8 @@ function getSlotIcon(slot: string): string {
                    backgroundColor: themeStore.colors.bgSecondary,
                    borderColor: themeStore.colors.borderSecondary 
                  }">
-              <span class="text-xl">{{ ICONS.spiritStones }}</span>
-              <span class="font-semibold font-mono text-sm"
+              <span class="text-xs font-medium">Linh Thạch:</span>
+              <span class="font-semibold font-mono text-sm ml-auto"
                     :style="{ color: themeStore.colors.textPrimary }">
                 {{ (player.player?.resources?.spiritStones || 0).toLocaleString() }}
               </span>
@@ -196,8 +192,8 @@ function getSlotIcon(slot: string): string {
                    backgroundColor: themeStore.colors.bgSecondary,
                    borderColor: themeStore.colors.borderSecondary 
                  }">
-              <span class="text-xl">{{ ICONS.herbs }}</span>
-              <span class="font-semibold font-mono text-sm"
+              <span class="text-xs font-medium">Dược:</span>
+              <span class="font-semibold font-mono text-sm ml-auto"
                     :style="{ color: themeStore.colors.textPrimary }">
                 {{ (player.player?.resources?.herbs || 0).toLocaleString() }}
               </span>
@@ -210,25 +206,25 @@ function getSlotIcon(slot: string): string {
              :style="{ borderColor: themeStore.colors.borderSecondary }">
           <div class="text-xs font-semibold uppercase tracking-wide mb-2"
                :style="{ color: themeStore.colors.textSecondary }">
-            {{ UI_TEXT.attributes }}
+            Thuộc Tính
           </div>
           <div class="flex flex-col gap-1.5">
             <div class="flex justify-between text-sm">
-              <span :style="{ color: themeStore.colors.textSecondary }">{{ UI_TEXT.body }}:</span>
+              <span :style="{ color: themeStore.colors.textSecondary }">Thể Chất:</span>
               <span class="font-semibold font-mono"
                     :style="{ color: themeStore.colors.textPrimary }">
                 {{ player.player?.attributes?.body || 10 }}
               </span>
             </div>
             <div class="flex justify-between text-sm">
-              <span :style="{ color: themeStore.colors.textSecondary }">{{ UI_TEXT.spirit }}:</span>
+              <span :style="{ color: themeStore.colors.textSecondary }">Thần Thức:</span>
               <span class="font-semibold font-mono"
                     :style="{ color: themeStore.colors.textPrimary }">
                 {{ player.player?.attributes?.spirit || 10 }}
               </span>
             </div>
             <div class="flex justify-between text-sm">
-              <span :style="{ color: themeStore.colors.textSecondary }">{{ UI_TEXT.talent }}:</span>
+              <span :style="{ color: themeStore.colors.textSecondary }">Thiên Phú:</span>
               <span class="font-semibold font-mono"
                     :style="{ color: themeStore.colors.textPrimary }">
                 {{ player.player?.attributes?.talent || 5 }}
@@ -263,15 +259,15 @@ function getSlotIcon(slot: string): string {
           </div>
           <div class="grid grid-cols-3 gap-2">
             <div 
-              v-for="slot in ['weapon', 'armor', 'helmet', 'boots', 'accessory', 'talisman']" 
+              v-for="(label, slot) in slots" 
               :key="slot" 
-              class="aspect-square flex items-center justify-center text-2xl font-bold rounded-lg border-2"
+              class="aspect-square flex items-center justify-center text-xs font-semibold rounded-lg border-2"
               :style="{ 
                 backgroundColor: themeStore.colors.bgSecondary,
                 borderColor: themeStore.colors.borderPrimary,
                 color: themeStore.colors.textPrimary
               }">
-              <span>{{ getSlotIcon(slot) }}</span>
+              <span>{{ label }}</span>
             </div>
           </div>
         </div>

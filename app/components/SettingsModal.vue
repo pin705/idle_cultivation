@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useThemeStore } from '../stores/theme'
-import { THEME_NAMES, UI_TEXT } from '../../shared/ui-constants'
-import type { ThemeName } from '../../shared/ui-constants'
+import { THEME_NAMES } from '../utils/ui-constants'
+import type { ThemeName } from '../utils/ui-constants'
 import BaseModal from './BaseModal.vue'
 
 const props = defineProps<{
@@ -23,13 +23,13 @@ function selectTheme(theme: ThemeName) {
 </script>
 
 <template>
-  <BaseModal :show="show" @close="emit('close')" :title="UI_TEXT.settings">
+  <BaseModal :show="show" @close="emit('close')" title="Cài Đặt">
     <div class="p-6 max-w-2xl mx-auto">
       <!-- Theme Selection -->
       <section class="mb-8">
         <h3 class="text-xl font-semibold mb-4 pb-2 border-b-2"
             :style="{ color: themeStore.colors.textPrimary, borderColor: themeStore.colors.borderPrimary }">
-          {{ UI_TEXT.themeSettings }}
+          Cài Đặt Chủ Đề
         </h3>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button
@@ -66,10 +66,10 @@ function selectTheme(theme: ThemeName) {
       <section class="mb-4">
         <h3 class="text-xl font-semibold mb-4 pb-2 border-b-2"
             :style="{ color: themeStore.colors.textPrimary, borderColor: themeStore.colors.borderPrimary }">
-          {{ UI_TEXT.otherSettings }}
+          Cài Đặt Khác
         </h3>
         <p class="text-sm" :style="{ color: themeStore.colors.textSecondary }">
-          {{ UI_TEXT.moreSettingsSoon }}
+          Thêm cài đặt sẽ có sớm...
         </p>
       </section>
     </div>

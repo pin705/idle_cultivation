@@ -5,9 +5,10 @@ import { REALMS, TECHNIQUES, WORLD_CYCLES } from '../../../shared/constants'
 import Card from '../ui/Card.vue'
 import Button from '../ui/Button.vue'
 import Divider from '../ui/Divider.vue'
-import { colors } from '../../styles/design-tokens'
+import { useThemeStore } from '../../stores/theme'
 
 const player = usePlayerStore()
+const themeStore = useThemeStore()
 const { call } = useApiAction()
 const loading = ref(false)
 

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { ThemeName, ThemeColors } from '../../shared/ui-constants'
-import { THEMES } from '../../shared/ui-constants'
+import type { ThemeName, ThemeColors } from '../utils/ui-constants'
+import { THEMES } from '../utils/ui-constants'
 
 export const useThemeStore = defineStore('theme', () => {
   // State
