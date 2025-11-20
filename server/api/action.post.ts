@@ -201,9 +201,13 @@ export default defineEventHandler(async (event) => {
                     // Update progress bar
                     player.realm.progress = Math.min(player.attributes.qi, player.realm.maxProgress)
                     player.updatedAt = tickNow
+                    
+                    // Log qi gain
+                    if (qiGain > 0) {
+                        message = `Tu luyện thu được ${qiGain} linh khí`
+                        log = message
+                    }
                 }
-                
-                // Return without message to avoid log spam
                 break
             }
 

@@ -76,6 +76,14 @@
         </div>
       </div>
     </div>
+
+    <!-- Offline Reward Modal -->
+    <OfflineRewardModal 
+      v-model="player.offlineReward.show"
+      :message="player.offlineReward.message"
+      :offline-time="player.offlineReward.offlineTime"
+      :qi-gained="player.offlineReward.qiGained"
+    />
   </div>
 </template>
 
@@ -86,6 +94,7 @@ import { useGameLoop } from '../composables/useGameLoop'
 import GameLog from '../components/GameLog.vue'
 // @ts-ignore - Vue SFC typing resolved at build time
 import CultivationMenu from '../components/CultivationMenu.vue'
+import OfflineRewardModal from '../components/OfflineRewardModal.vue'
 import { useApiAction } from '../composables/useApiAction'
 
 const { loggedIn, user, clear, fetch: fetchSession } = useUserSession()
@@ -120,14 +129,14 @@ onMounted(() => {
     if (loggedIn.value) {
       player.serverTick()
     }
-  }, 1000)
+  }, 5000)
   
   // Auto-save every 5 seconds
-  saveInterval = setInterval(() => {
-    if (loggedIn.value) {
-      player.saveGame()
-    }
-  }, 5000)
+  // saveInterval = setInterval(() => {
+  //   if (loggedIn.value) {
+  //     player.saveGame()
+  //   }
+  // }, 5000)
 })
 onUnmounted(() => {
   if (tickInterval) clearInterval(tickInterval)

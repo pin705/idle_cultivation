@@ -36,7 +36,13 @@ export const usePlayerStore = defineStore('player', {
         logs: [] as string[],
         tribulation: { active: false, difficulty: 1, endsAt: null as any, buff: 0 } as any,
         sect: { id: null as any, contribution: 0 } as any,
-        missions: [] as any[]
+        missions: [] as any[],
+        offlineReward: {
+            show: false,
+            message: '',
+            offlineTime: 0,
+            qiGained: 0
+        }
     }),
 
     getters: {
@@ -236,7 +242,14 @@ export const usePlayerStore = defineStore('player', {
                 if (response.success) {
                     if (response.message !== 'Chưa đủ thời gian bế quan.') {
                         this.addLog(response.message)
-                        alert(response.message)
+                        // Parse offline time and qi from message
+                        const timeMatch = response.message.match(/(\d+)\s*giây/)
+                        const qiMatch = response.message.match(/(\d+)\s*linh khí/)
+                        
+                        this.offlineReward.offlineTime = timeMatch ? parseInt(timeMatch[1]) : 0
+                        this.offlineReward.qiGained = qiMatch ? parseInt(qiMatch[1]) : 0
+                        this.offlineReward.message = 'Tu luyện không ngừng nghỉ, đạo tâm kiên định'
+                        this.offlineReward.show = true
                     }
                 }
             } catch (e) {
