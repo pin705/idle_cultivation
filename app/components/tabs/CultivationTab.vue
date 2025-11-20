@@ -1,32 +1,53 @@
 <script setup lang="ts">
-import { usePlayerStore } from '../stores/player'
-import { useApiAction } from '../composables/useApiAction'
-import { REALMS, TECHNIQUES, WORLD_CYCLES } from '../../shared/constants'
-import Card from './ui/Card.vue'
-import Button from './ui/Button.vue'
-import Divider from './ui/Divider.vue'
-import { colors } from '../styles/design-tokens'
+import { usePlayerStore } from '../../stores/player'
+import { useApiAction } from '../../composables/useApiAction'
+import { REALMS, TECHNIQUES, WORLD_CYCLES } from '../../../shared/constants'
+import Card from '../ui/Card.vue'
+import Button from '../ui/Button.vue'
+import Divider from '../ui/Divider.vue'
+import { colors } from '../../styles/design-tokens'
 
 const player = usePlayerStore()
 const { call } = useApiAction()
 const loading = ref(false)
 
 const activeTechnique = computed(() => {
-  const techKey = player.player?.cultivation?.activeTechnique
+  const techKey = player?.cultivation?.activeTechnique
   if (!techKey) return null
   return TECHNIQUES.find(t => t.key === techKey)
 })
 
 const worldCycle = computed(() => {
-  return player.player?.world?.currentCycle || 'normal'
+  return player?.world?.currentCycle || 'normal'
 })
 
 const worldEvent = computed(() => {
-  return player.player?.world?.activeEvent?.type || null
+  return player?.world?.activeEvent?.type || null
 })
 
+function getCycleName(cycle: string) {
+  const cycleNames: any = {
+    normal: 'Bình Thường',
+    metal: 'Kim',
+    wood: 'Mộc',
+    water: 'Thủy',
+    fire: 'Hỏa',
+    earth: 'Thổ'
+  }
+  return cycleNames[cycle] || 'Không Xác Định'
+}
+
+function getEventName(eventType: string) {
+  const eventNames: any = {
+    qi_surge: 'Linh Khí Dâng Trào',
+    tribulation_storm: 'Bão Thiên Kiếp',
+    sect_blessing: 'Phúc Lành Tông Môn'
+  }
+  return eventNames[eventType] || 'Sự Kiện Không Xác Định'
+}
+
 const realmTimeline = computed(() => {
-  const currentRealm = player.player?.realm?.major || 'Luyện Khí'
+  const currentRealm = player?.realm?.major || 'Luyện Khí'
   const currentIndex = REALMS.indexOf(currentRealm)
   return REALMS.map((realm, index) => ({
     name: realm,
@@ -65,7 +86,7 @@ async function condenseQi() {
 }
 
 const logs = computed(() => {
-  return (player.player?.logs || []).slice(-10).reverse()
+  return (player?.logs || []).slice(-10).reverse()
 })
 </script>
 
@@ -84,7 +105,7 @@ const logs = computed(() => {
                 'realm-locked': realm.locked 
               }]">
                 <span v-if="realm.completed">✓</span>
-                <span v-else-if="realm.current">{{ player.player?.realm?.minor }}</span>
+                <span v-else-if="realm.current">{{ player?.realm?.minor }}</span>
                 <span v-else>🔒</span>
               </div>
               <div class="realm-name">{{ realm.name }}</div>
@@ -139,7 +160,7 @@ const logs = computed(() => {
           <div class="rate-breakdown">
             <div class="rate-total">
               <span>Tổng:</span>
-              <span class="rate-value">+{{ (player.player?.cultivation?.baseRate || 1).toFixed(1) }} Qi/giây</span>
+              <span class="rate-value">+{{ (player?.cultivation?.baseRate || 1).toFixed(1) }} Qi/giây</span>
             </div>
             <Divider spacing="sm" />
             <div class="rate-factors">
@@ -159,7 +180,7 @@ const logs = computed(() => {
                 <span>Chu Kỳ Thiên Địa:</span>
                 <span class="factor-positive">+0%</span>
               </div>
-              <div v-if="player.player?.sect?.contribution" class="factor-item">
+              <div v-if="player?.sect?.contribution" class="factor-item">
                 <span>Tông Môn:</span>
                 <span class="factor-positive">+{{ getSectBonus() }}%</span>
               </div>
@@ -198,48 +219,6 @@ const logs = computed(() => {
     </div>
   </div>
 </template>
-
-<script lang="ts">
-import { colors } from '../styles/design-tokens'
-import { getSectRank } from '../../shared/constants'
-
-function getElementColor(element: string): string {
-  const elementColors: Record<string, string> = {
-    metal: colors.element.metal,
-    wood: colors.element.wood,
-    water: colors.element.water,
-    fire: colors.element.fire,
-    earth: colors.element.earth
-  }
-  return elementColors[element] || colors.element.neutral
-}
-
-function getCycleName(cycle: string): string {
-  const names: Record<string, string> = {
-    normal: 'Bình Thường',
-    eclipse: 'Nguyệt Thực',
-    harmony: 'Hòa Hợp',
-    chaos: 'Hỗn Loạn'
-  }
-  return names[cycle] || cycle
-}
-
-function getEventName(event: string): string {
-  const names: Record<string, string> = {
-    meteor_shower: 'Mưa Sao Băng',
-    spirit_tide: 'Triều Linh Khí',
-    cosmic_resonance: 'Cộng Hưởng Vũ Trụ'
-  }
-  return names[event] || event
-}
-
-function getSectBonus(): number {
-  const player = usePlayerStore().player
-  if (!player?.sect?.contribution) return 0
-  const rank = getSectRank(player.sect.contribution)
-  return ((rank.benefits.qiBonus - 1) * 100)
-}
-</script>
 
 <style scoped>
 .cultivation-tab {

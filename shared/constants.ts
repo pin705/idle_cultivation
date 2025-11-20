@@ -124,7 +124,7 @@ export function getRealmIndex(realmMajor: string): number {
 
 export function canUnlockTechnique(technique: TechniqueDef, playerRealm: string, playerMinor: number, unlockedTechniques: string[]): boolean {
   // Check realm requirement
-  if (technique.minRealm) {
+  if (technique?.minRealm) {
     const reqIndex = getRealmIndex(technique.minRealm)
     const playerIndex = getRealmIndex(playerRealm)
     if (playerIndex < reqIndex) return false
@@ -132,7 +132,7 @@ export function canUnlockTechnique(technique: TechniqueDef, playerRealm: string,
   }
   
   // Check prerequisite techniques
-  if (technique.requires) {
+  if (technique?.requires) {
     for (const req of technique.requires) {
       if (!unlockedTechniques.includes(req)) return false
     }
