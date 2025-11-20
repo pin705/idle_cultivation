@@ -123,11 +123,52 @@ export function calcEquipmentBonus(equipment: Array<{ item?: any } & { itemId?: 
   return { mult, add }
 }
 
-// Shop catalog (simple)
-export const SHOP_CATALOG: Array<{ key: string, name: string, item: any, basePrice: number }> = [
-  { key: 'iron_sword', name: 'Kiếm Sắt', item: { type: 'equipment', slot: 'weapon', elementTag: 'metal', tier: 'common', baseEffects: { rateAdd: 0.5 } }, basePrice: 100 },
-  { key: 'iron_armor', name: 'Giáp Sắt', item: { type: 'equipment', slot: 'armor', elementTag: 'metal', tier: 'common', baseEffects: { rateMult: 1.02 } }, basePrice: 120 },
-  { key: 'herb_bundle', name: 'Bó Thảo Dược', item: { type: 'material', isStackable: true }, basePrice: 20 }
+// Shop catalog - Expanded to 30+ items across 5 tiers
+export const SHOP_CATALOG: Array<{ key: string, name: string, item: any, basePrice: number, tier: number, minRealm?: string }> = [
+  // Tier 1 - Luyện Khí (Common)
+  { key: 'iron_sword', name: 'Kiếm Sắt', item: { type: 'equipment', slot: 'weapon', elementTag: 'metal', tier: 'common', baseEffects: { rateAdd: 0.5 } }, basePrice: 100, tier: 1 },
+  { key: 'iron_armor', name: 'Giáp Sắt', item: { type: 'equipment', slot: 'armor', elementTag: 'metal', tier: 'common', baseEffects: { rateMult: 1.02 } }, basePrice: 120, tier: 1 },
+  { key: 'wooden_staff', name: 'Trượng Gỗ', item: { type: 'equipment', slot: 'weapon', elementTag: 'wood', tier: 'common', baseEffects: { rateAdd: 0.4 } }, basePrice: 90, tier: 1 },
+  { key: 'cloth_robe', name: 'Bào Y Vải', item: { type: 'equipment', slot: 'armor', elementTag: 'wood', tier: 'common', baseEffects: { rateMult: 1.01 } }, basePrice: 100, tier: 1 },
+  { key: 'jade_pendant', name: 'Bội Ngọc Bích', item: { type: 'equipment', slot: 'accessory', elementTag: 'water', tier: 'common', baseEffects: { rateAdd: 0.3 } }, basePrice: 80, tier: 1 },
+  { key: 'basic_talisman', name: 'Bùa Cơ Bản', item: { type: 'equipment', slot: 'talisman', elementTag: 'earth', tier: 'common', baseEffects: { rateMult: 1.01 } }, basePrice: 70, tier: 1 },
+  { key: 'herb_bundle', name: 'Bó Thảo Dược', item: { type: 'material', isStackable: true }, basePrice: 20, tier: 1 },
+  { key: 'spirit_water', name: 'Linh Thủy', item: { type: 'material', isStackable: true }, basePrice: 30, tier: 1 },
+  
+  // Tier 2 - Trúc Cơ (Rare)
+  { key: 'steel_blade', name: 'Kiếm Thép', item: { type: 'equipment', slot: 'weapon', elementTag: 'metal', tier: 'rare', baseEffects: { rateAdd: 1.5, rateMult: 1.05 } }, basePrice: 500, tier: 2, minRealm: 'Trúc Cơ' },
+  { key: 'steel_armor', name: 'Giáp Thép', item: { type: 'equipment', slot: 'armor', elementTag: 'metal', tier: 'rare', baseEffects: { rateMult: 1.08 } }, basePrice: 600, tier: 2, minRealm: 'Trúc Cơ' },
+  { key: 'fire_wand', name: 'Trượng Hỏa', item: { type: 'equipment', slot: 'weapon', elementTag: 'fire', tier: 'rare', baseEffects: { rateAdd: 1.2, rateMult: 1.04 } }, basePrice: 480, tier: 2, minRealm: 'Trúc Cơ' },
+  { key: 'water_robe', name: 'Bào Thủy', item: { type: 'equipment', slot: 'armor', elementTag: 'water', tier: 'rare', baseEffects: { rateMult: 1.07 } }, basePrice: 550, tier: 2, minRealm: 'Trúc Cơ' },
+  { key: 'spirit_ring', name: 'Linh Nhẫn', item: { type: 'equipment', slot: 'accessory', elementTag: 'none', tier: 'rare', baseEffects: { rateAdd: 0.8 } }, basePrice: 400, tier: 2, minRealm: 'Trúc Cơ' },
+  { key: 'protection_charm', name: 'Hộ Thân Bùa', item: { type: 'equipment', slot: 'talisman', elementTag: 'earth', tier: 'rare', baseEffects: { rateMult: 1.05 } }, basePrice: 450, tier: 2, minRealm: 'Trúc Cơ' },
+  { key: 'qi_pill_recipe', name: 'Phương Linh Đan', item: { type: 'recipe', isStackable: false }, basePrice: 300, tier: 2, minRealm: 'Trúc Cơ' },
+  { key: 'rare_herb', name: 'Linh Dược Quý', item: { type: 'material', isStackable: true }, basePrice: 100, tier: 2, minRealm: 'Trúc Cơ' },
+  
+  // Tier 3 - Kim Đan (Epic)
+  { key: 'profound_sword', name: 'Huyền Thiên Kiếm', item: { type: 'equipment', slot: 'weapon', elementTag: 'metal', tier: 'epic', baseEffects: { rateAdd: 3.0, rateMult: 1.10 } }, basePrice: 2000, tier: 3, minRealm: 'Kim Đan' },
+  { key: 'dragon_scale_armor', name: 'Giáp Long Lân', item: { type: 'equipment', slot: 'armor', elementTag: 'earth', tier: 'epic', baseEffects: { rateMult: 1.15 } }, basePrice: 2500, tier: 3, minRealm: 'Kim Đan' },
+  { key: 'phoenix_staff', name: 'Phượng Hoàng Trượng', item: { type: 'equipment', slot: 'weapon', elementTag: 'fire', tier: 'epic', baseEffects: { rateAdd: 2.5, rateMult: 1.08 } }, basePrice: 1900, tier: 3, minRealm: 'Kim Đan' },
+  { key: 'mystic_robe', name: 'Huyền Y', item: { type: 'equipment', slot: 'armor', elementTag: 'water', tier: 'epic', baseEffects: { rateMult: 1.12 } }, basePrice: 2200, tier: 3, minRealm: 'Kim Đan' },
+  { key: 'dao_amulet', name: 'Đạo Bội', item: { type: 'equipment', slot: 'accessory', elementTag: 'none', tier: 'epic', baseEffects: { rateAdd: 2.0 } }, basePrice: 1800, tier: 3, minRealm: 'Kim Đan' },
+  { key: 'heaven_talisman', name: 'Thiên Cơ Bùa', item: { type: 'equipment', slot: 'talisman', elementTag: 'none', tier: 'epic', baseEffects: { rateMult: 1.10 } }, basePrice: 2000, tier: 3, minRealm: 'Kim Đan' },
+  { key: 'alchemy_cauldron', name: 'Luyện Đan Lư', item: { type: 'tool', isStackable: false }, basePrice: 1500, tier: 3, minRealm: 'Kim Đan' },
+  { key: 'enlightenment_pill', name: 'Ngộ Đạo Đan', item: { type: 'consumable', isStackable: true }, basePrice: 500, tier: 3, minRealm: 'Kim Đan' },
+  
+  // Tier 4 - Nguyên Anh (Legendary)
+  { key: 'immortal_blade', name: 'Tiên Kiếm', item: { type: 'equipment', slot: 'weapon', elementTag: 'metal', tier: 'legendary', baseEffects: { rateAdd: 6.0, rateMult: 1.20 } }, basePrice: 8000, tier: 4, minRealm: 'Nguyên Anh' },
+  { key: 'celestial_armor', name: 'Thiên Giáp', item: { type: 'equipment', slot: 'armor', elementTag: 'none', tier: 'legendary', baseEffects: { rateMult: 1.25 } }, basePrice: 10000, tier: 4, minRealm: 'Nguyên Anh' },
+  { key: 'void_ring', name: 'Hư Không Nhẫn', item: { type: 'equipment', slot: 'accessory', elementTag: 'none', tier: 'legendary', baseEffects: { rateAdd: 4.0, rateMult: 1.10 } }, basePrice: 7000, tier: 4, minRealm: 'Nguyên Anh' },
+  { key: 'tribulation_charm', name: 'Thiên Kiếp Bùa', item: { type: 'equipment', slot: 'talisman', elementTag: 'none', tier: 'legendary', baseEffects: { rateMult: 1.20 } }, basePrice: 8500, tier: 4, minRealm: 'Nguyên Anh' },
+  { key: 'artifact_fragment', name: 'Thần Khí Mảnh', item: { type: 'material', isStackable: true }, basePrice: 1000, tier: 4, minRealm: 'Nguyên Anh' },
+  { key: 'rebirth_token', name: 'Tái Sinh Bài', item: { type: 'consumable', isStackable: true }, basePrice: 3000, tier: 4, minRealm: 'Nguyên Anh' },
+  
+  // Tier 5 - Hóa Thần (Mythic)
+  { key: 'chaos_sword', name: 'Hỗn Nguyên Kiếm', item: { type: 'equipment', slot: 'weapon', elementTag: 'none', tier: 'mythic', baseEffects: { rateAdd: 10.0, rateMult: 1.30 } }, basePrice: 30000, tier: 5, minRealm: 'Hóa Thần' },
+  { key: 'primordial_robe', name: 'Thái Sơ Y', item: { type: 'equipment', slot: 'armor', elementTag: 'none', tier: 'mythic', baseEffects: { rateMult: 1.35 } }, basePrice: 35000, tier: 5, minRealm: 'Hóa Thần' },
+  { key: 'dao_heart_crystal', name: 'Đạo Tâm Tinh', item: { type: 'equipment', slot: 'accessory', elementTag: 'none', tier: 'mythic', baseEffects: { rateAdd: 8.0, rateMult: 1.15 } }, basePrice: 28000, tier: 5, minRealm: 'Hóa Thần' },
+  { key: 'cosmic_seal', name: 'Vũ Trụ Ấn', item: { type: 'equipment', slot: 'talisman', elementTag: 'none', tier: 'mythic', baseEffects: { rateMult: 1.30 } }, basePrice: 32000, tier: 5, minRealm: 'Hóa Thần' },
+  { key: 'ascension_crystal', name: 'Thăng Thiên Tinh', item: { type: 'material', isStackable: true }, basePrice: 5000, tier: 5, minRealm: 'Hóa Thần' }
 ]
 
 export function priceWithSoftCap(base: number, purchasedCount: number) {

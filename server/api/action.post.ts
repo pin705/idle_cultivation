@@ -277,6 +277,11 @@ export default defineEventHandler(async (event) => {
                         player.realm.progress = 0
                         player.realm.maxProgress = Math.floor(maxProgress * 1.5)
 
+                        // Spirit stone reward for minor breakthrough
+                        const realmIndex = REALMS.indexOf(major)
+                        const minorReward = 20 * (realmIndex + 1) // 20/40/60/80/100 per realm tier
+                        player.resources.spiritStones += minorReward
+
                         // Major breakthrough check
                         if (player.realm.minor > 9) {
                             const currentIndex = REALMS.indexOf(major)
@@ -284,10 +289,13 @@ export default defineEventHandler(async (event) => {
                                 player.realm.major = REALMS[currentIndex + 1]
                                 player.realm.minor = 1
                                 player.realm.maxProgress *= 2
-                                message = `Chúc mừng! Bạn đã đột phá lên ${player.realm.major}!`
+                                // Major breakthrough bonus
+                                const majorReward = 100 * (currentIndex + 2) // 200/300/400/500
+                                player.resources.spiritStones += majorReward
+                                message = `Chúc mừng! Bạn đã đột phá lên ${player.realm.major}! +${majorReward + minorReward} Linh Thạch`
                             }
                         } else {
-                            message = `Đột phá tiểu cảnh giới thành công! Tăng cường thuộc tính.`
+                            message = `Đột phá tiểu cảnh giới thành công! +${minorReward} Linh Thạch`
                         }
 
                         // Stat boost
@@ -375,10 +383,18 @@ export default defineEventHandler(async (event) => {
                 const successChance = Math.min(0.95, baseChance + buff)
                 const ok = Math.random() < successChance
                 player.tribulation.active = false
+                
+                // Calculate rewards based on realm
+                const realmIndex = REALMS.indexOf(player.realm.major)
+                const rewardQi = 100 + Math.floor((player.realm.minor || 1) * 20)
+                const spiritStoneReward = 50 + (realmIndex * 50) // 50/100/150/200/250
+                const herbReward = 5 + (realmIndex * 5) // 5/10/15/20/25
+                
                 if (ok) {
-                    const rewardQi = 100 + Math.floor((player.realm.minor || 1) * 20)
                     player.attributes.qi = (player.attributes.qi || 0) + rewardQi
-                    message = `Vượt qua Thiên Kiếp! Nhận ${rewardQi} linh khí.`
+                    player.resources.spiritStones = (player.resources.spiritStones || 0) + spiritStoneReward
+                    player.resources.herbs = (player.resources.herbs || 0) + herbReward
+                    message = `Vượt qua Thiên Kiếp! Nhận ${rewardQi} linh khí, ${spiritStoneReward} Linh Thạch, ${herbReward} Thảo Dược.`
                 } else {
                     const lost = Math.min(player.attributes.qi || 0, 50)
                     player.attributes.qi = (player.attributes.qi || 0) - lost
@@ -522,7 +538,15 @@ export default defineEventHandler(async (event) => {
                     }
                     const count = purchased[c.key] || 0
                     const price = priceWithSoftCap(c.basePrice, count)
-                    return { key: c.key, name: c.name, itemId: item._id, price, count }
+                    return { 
+                        key: c.key, 
+                        name: c.name, 
+                        itemId: item._id, 
+                        price, 
+                        count,
+                        tier: c.tier,
+                        minRealm: c.minRealm 
+                    }
                 }))
                 return { success: true, message: 'Danh sách cửa hàng', data: items }
             }
@@ -886,6 +910,26 @@ export default defineEventHandler(async (event) => {
                 player.ascension.spentPoints += perkDef.cost
                 
                 message = `Nâng cấp ${perkDef.name} lên cấp ${perk.level}`
+                log = message
+                break
+            }
+
+            case 'QI_CONDENSE': {
+                // Convert Qi to Spirit Stones (1000:1 ratio)
+                const { amount } = payload || {}
+                if (!amount || amount <= 0) {
+                    return { success: false, message: 'Số lượng không hợp lệ' }
+                }
+                
+                const qiCost = amount * 1000
+                if ((player.attributes.qi || 0) < qiCost) {
+                    return { success: false, message: 'Không đủ Linh Khí' }
+                }
+                
+                player.attributes.qi -= qiCost
+                player.resources.spiritStones = (player.resources.spiritStones || 0) + amount
+                
+                message = `Ngưng kết Linh Khí thành công! -${qiCost} Linh Khí, +${amount} Linh Thạch`
                 log = message
                 break
             }

@@ -40,6 +40,7 @@ export type ActionType =
   | 'ASCENSION_INFO'
   | 'ASCENSION_PERFORM'
   | 'ASCENSION_UPGRADE_PERK'
+  | 'QI_CONDENSE'
 
 export function useApiAction() {
   const player = usePlayerStore()
