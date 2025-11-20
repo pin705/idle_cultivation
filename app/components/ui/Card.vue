@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { useThemeStore } from '../../stores/theme'
-
 interface Props {
   title?: string
   subtitle?: string
@@ -15,43 +13,32 @@ const props = withDefaults(defineProps<Props>(), {
   hoverable: false
 })
 
-const themeStore = useThemeStore()
-
 const paddingClasses = {
   none: '',
-  sm: 'p-2',
+  sm: 'p-3',
   md: 'p-4',
   lg: 'p-6'
 }
+
+const baseClasses = 'border-2 border-ink bg-paper overflow-hidden transition-all duration-200'
+
+const computedClasses = computed(() => [
+  baseClasses,
+  props.shadow ? 'shadow-ink' : '',
+  props.hoverable ? 'hover:-translate-y-1 hover:shadow-ink-lg cursor-pointer' : ''
+])
 </script>
 
 <template>
-  <div 
-    :class="[
-      'border-2 rounded-lg overflow-hidden transition-all duration-200',
-      shadow ? 'shadow' : '',
-      hoverable ? 'hover:-translate-y-1 hover:shadow-lg cursor-pointer' : ''
-    ]"
-    :style="{
-      backgroundColor: themeStore.colors.bgPaper,
-      borderColor: themeStore.colors.borderPrimary
-    }">
+  <div :class="computedClasses">
     <div 
       v-if="title || subtitle || $slots.header" 
-      class="px-4 py-3 border-b"
-      :style="{
-        backgroundColor: themeStore.colors.bgSecondary,
-        borderColor: themeStore.colors.borderSecondary
-      }">
+      class="px-4 py-3 border-b-2 border-ink bg-paper-aged">
       <slot name="header">
-        <div v-if="title" 
-             class="text-lg font-semibold"
-             :style="{ color: themeStore.colors.textPrimary }">
+        <div v-if="title" class="text-title">
           {{ title }}
         </div>
-        <div v-if="subtitle" 
-             class="text-sm mt-1"
-             :style="{ color: themeStore.colors.textSecondary }">
+        <div v-if="subtitle" class="text-caption mt-1">
           {{ subtitle }}
         </div>
       </slot>
@@ -63,16 +50,8 @@ const paddingClasses = {
     
     <div 
       v-if="$slots.footer" 
-      class="px-4 py-3 border-t"
-      :style="{
-        backgroundColor: themeStore.colors.bgSecondary,
-        borderColor: themeStore.colors.borderSecondary
-      }">
+      class="px-4 py-3 border-t-2 border-ink bg-paper-aged">
       <slot name="footer" />
     </div>
   </div>
 </template>
-
-<style scoped>
-/* Minimal custom styles */
-</style>

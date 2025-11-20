@@ -8,14 +8,14 @@ import Divider from '../ui/Divider.vue'
 import { useThemeStore } from '../../stores/theme'
 
 const player = usePlayerStore()
-const themeStore = useThemeStore()
+const { colors } = useThemeStore()
 const { call } = useApiAction()
 const loading = ref(false)
 
 const activeTechnique = computed(() => {
   const techKey = player?.cultivation?.activeTechnique
   if (!techKey) return null
-  return TECHNIQUES.find(t => t.key === techKey)
+  return TECHNIQUES.find(t => t.id === techKey)
 })
 
 const worldCycle = computed(() => {
@@ -99,7 +99,7 @@ const logs = computed(() => {
         <!-- Realm Progress -->
         <Card title="Tu Vi Cảnh Giới" shadow>
           <div class="realm-timeline">
-            <div v-for="(realm, index) in realmTimeline" :key="realm.name" class="realm-step">
+            <div v-for="(realm, index) in realmTimeline" :id="realm.name" class="realm-step">
               <div :class="['realm-marker', { 
                 'realm-completed': realm.completed, 
                 'realm-current': realm.current,
@@ -207,7 +207,7 @@ const logs = computed(() => {
         <!-- Recent Logs -->
         <Card title="Nhật Ký Tu Luyện" shadow class="mt-4">
           <div class="logs-container">
-            <div v-for="(log, index) in logs" :key="index" class="log-entry">
+            <div v-for="(log, index) in logs" :id="index" class="log-entry">
               <span class="log-time">{{ new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) }}</span>
               <span class="log-text">{{ log }}</span>
             </div>

@@ -13,12 +13,103 @@
   }
   
   body {
-    @apply font-serif text-base leading-normal;
+    @apply font-serif text-base leading-relaxed text-ink bg-paper;
+  }
+}
+
+/* Component Patterns - Thủy Mặc Style */
+@layer components {
+  /* Ink Border - Nét vẽ mực */
+  .ink-border {
+    @apply border-2 border-ink;
+  }
+  
+  .ink-border-light {
+    @apply border-2 border-ink-light;
+  }
+  
+  /* Paper Surfaces */
+  .paper-surface {
+    @apply bg-paper;
+  }
+  
+  .paper-aged {
+    @apply bg-paper-aged;
+  }
+  
+  .paper-dark {
+    @apply bg-paper-dark;
+  }
+  
+  /* Seal/Stamp Effect */
+  .seal-accent {
+    @apply bg-seal text-paper;
+  }
+  
+  /* Gold Accent */
+  .gold-accent {
+    @apply text-gold;
+  }
+  
+  /* Minimalist Button */
+  .btn-ink {
+    @apply px-4 py-2 border-2 border-ink bg-transparent text-ink font-medium
+           transition-all duration-200 hover:bg-ink hover:text-paper;
+  }
+  
+  .btn-seal {
+    @apply px-4 py-2 border-2 border-seal bg-seal text-paper font-medium
+           transition-all duration-200 hover:bg-seal-light;
+  }
+  
+  .btn-gold {
+    @apply px-4 py-2 border-2 border-gold bg-transparent text-ink font-medium
+           transition-all duration-200 hover:bg-gold hover:text-ink;
+  }
+  
+  /* Card/Panel with Ink Border */
+  .card-ink {
+    @apply border-2 border-ink bg-paper shadow-ink;
+  }
+  
+  /* Text Hierarchy */
+  .text-title {
+    @apply text-2xl font-bold text-ink tracking-wide;
+  }
+  
+  .text-subtitle {
+    @apply text-lg font-semibold text-ink-light;
+  }
+  
+  .text-body {
+    @apply text-base text-ink;
+  }
+  
+  .text-caption {
+    @apply text-sm text-ink-light;
   }
 }
 
 /* Custom Utilities */
 @layer utilities {
+  /* Scrollbar - Minimal */
+  .scrollbar-ink::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .scrollbar-ink::-webkit-scrollbar-track {
+    @apply bg-paper-aged;
+  }
+  
+  .scrollbar-ink::-webkit-scrollbar-thumb {
+    @apply bg-ink-light rounded;
+  }
+  
+  .scrollbar-ink::-webkit-scrollbar-thumb:hover {
+    @apply bg-ink;
+  }
+  
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
@@ -27,40 +118,35 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  
-  /* Ink brush effect for borders */
-  .border-ink {
-    border-width: 2px;
-    border-style: solid;
-  }
-  
-  /* Paper texture effect */
-  .bg-paper {
-    background-color: #fffef9;
-  }
-  
-  .bg-aged-paper {
-    background-color: #f5f4ef;
-  }
 }
 
-/* Animation utilities */
+/* Animations - Subtle & Refined */
 @layer utilities {
   @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
   }
   
-  @keyframes slideIn {
-    from { transform: translateY(-10px); opacity: 0; }
+  @keyframes slideDown {
+    from { transform: translateY(-8px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
+  }
+  
+  @keyframes inkDrop {
+    0% { transform: scale(0.95); opacity: 0; }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); opacity: 1; }
   }
   
   .animate-fade-in {
     animation: fadeIn 0.3s ease-in-out;
   }
   
-  .animate-slide-in {
-    animation: slideIn 0.3s ease-in-out;
+  .animate-slide-down {
+    animation: slideDown 0.3s ease-out;
+  }
+  
+  .animate-ink-drop {
+    animation: inkDrop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 }

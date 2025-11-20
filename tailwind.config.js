@@ -11,25 +11,45 @@ export default {
     theme: {
         extend: {
             colors: {
-                // Ink Wash theme colors
-                'ink-black': '#1a1a1a',
-                'paper-white': '#fffef9',
-                'seal-red': '#8b0000',
-                'gold': '#d4af37',
+                // Thủy Mặc (Ink Wash) - Primary Palette
+                'ink': {
+                    DEFAULT: '#1a1a1a',
+                    light: '#4a4a4a',
+                    lighter: '#6b7280',
+                },
+                'paper': {
+                    DEFAULT: '#fffef9',
+                    aged: '#f5f4ef',
+                    dark: '#eae8e0',
+                },
+                'seal': {
+                    DEFAULT: '#8b0000',
+                    light: '#a52a2a',
+                },
+                'gold': {
+                    DEFAULT: '#d4af37',
+                    dark: '#b8860b',
+                },
                 
-                // Extended palette
-                'aged-paper': '#f5f4ef',
-                'dark-paper': '#eae8e0',
-                'ink-gray': '#4a4a4a',
-                'light-ink': '#6b7280',
+                // Elements - Ngũ Hành
+                'element': {
+                    metal: '#d4af37',
+                    wood: '#2d5016',
+                    water: '#1e3a8a',
+                    fire: '#8b0000',
+                    earth: '#8b4513',
+                },
             },
             fontFamily: {
-                serif: ['"Noto Serif SC"', '"Source Han Serif SC"', 'serif'],
+                serif: ['"Noto Serif SC"', '"Source Han Serif SC"', 'Georgia', 'serif'],
                 sans: ['ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
-                mono: ['ui-monospace', '"SF Mono"', 'monospace'],
             },
-            borderRadius: {
-                'ink': '0.25rem',
+            borderWidth: {
+                '3': '3px',
+            },
+            boxShadow: {
+                'ink': '2px 2px 0 0 rgba(26, 26, 26, 0.15)',
+                'ink-lg': '4px 4px 0 0 rgba(26, 26, 26, 0.2)',
             },
         },
     },
