@@ -37,39 +37,44 @@ const openAscension = () => {
 
 <template>
   <div>
-    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
-      <button @click="showCharacter = true" class="px-2 sm:px-3 py-2 sm:py-3 bg-white border border-ink-black hover:bg-gray-100 text-xs sm:text-sm font-bold transition-colors tracking-wide">
-        Nhân Vật
-      </button>
-      <button @click="showInventory = true" class="px-2 sm:px-3 py-2 sm:py-3 bg-white border border-ink-black hover:bg-gray-100 text-xs sm:text-sm font-bold transition-colors tracking-wide">
-        Túi Đồ
-      </button>
-      <button @click="showTechnique = true" class="px-2 sm:px-3 py-2 sm:py-3 bg-white border border-ink-black hover:bg-gray-100 text-xs sm:text-sm font-bold transition-colors tracking-wide">
-        Công Pháp
-      </button>
-      <button @click="showEquipment = true" class="px-2 sm:px-3 py-2 sm:py-3 bg-white border border-ink-black hover:bg-gray-100 text-xs sm:text-sm font-bold transition-colors tracking-wide">
-        Trang Bị
-      </button>
-      <button @click="showShop = true" class="px-2 sm:px-3 py-2 sm:py-3 bg-white border border-ink-black hover:bg-gray-100 text-xs sm:text-sm font-bold transition-colors tracking-wide">
-        Cửa Hàng
-      </button>
-      <button @click="showCrafting = true" class="px-2 sm:px-3 py-2 sm:py-3 bg-white border border-ink-black hover:bg-gray-100 text-xs sm:text-sm font-bold transition-colors tracking-wide">
-        Chế Tạo
-      </button>
-      <button @click="showTribulation = true" class="px-2 sm:px-3 py-2 sm:py-3 bg-white border border-ink-black hover:bg-gray-100 text-xs sm:text-sm font-bold transition-colors tracking-wide">
-        Thiên Kiếp
-      </button>
-      <button @click="showSect = true" class="px-2 sm:px-3 py-2 sm:py-3 bg-white border border-ink-black hover:bg-gray-100 text-xs sm:text-sm font-bold transition-colors tracking-wide">
-        Tông Môn
-      </button>
-      <button @click="showMissions = true" class="px-2 sm:px-3 py-2 sm:py-3 bg-white border border-ink-black hover:bg-gray-100 text-xs sm:text-sm font-bold transition-colors tracking-wide">
-        Nhiệm Vụ
-      </button>
-      <button @click="openSecretRealms" class="px-2 sm:px-3 py-2 sm:py-3 bg-gradient-to-r from-purple-700 to-purple-900 text-white border border-purple-900 hover:from-purple-600 hover:to-purple-800 text-xs sm:text-sm font-bold transition-colors tracking-wide">
+    <div class="flex flex-wrap gap-2 pb-2 pt-2">
+              <button @click="openSecretRealms" class="relative flex items-center gap-1.5 rounded-lg bg-black/40 px-3 py-1.5 text-xs font-semibold text-white shadow-md transition-colors duration-200 hover:border-yellow-400/50 hover:bg-gray-700 hover:text-white">
         Mật Cảnh
       </button>
-      <button @click="openAscension" class="px-2 sm:px-3 py-2 sm:py-3 bg-gradient-to-r from-pink-700 to-red-700 text-white border border-red-900 hover:from-pink-600 hover:to-red-600 text-xs sm:text-sm font-bold transition-colors tracking-wide">
+      <button @click="openAscension" class="relative flex items-center gap-1.5 rounded-lg bg-black/40 px-3 py-1.5 text-xs font-semibold text-white shadow-md transition-colors duration-200 hover:border-yellow-400/50 hover:bg-gray-700 hover:text-white">
         Thăng Thiên
+      </button>
+    </div>
+    <SecretRealmsModal ref="secretRealmsRef" />
+    <AscensionModal ref="ascensionRef" />
+
+    <div class="flex flex-wrap gap-2 pb-2 pt-2">
+      <button @click="showCharacter = true" class="relative mx-1 flex h-9 w-9 items-center justify-center rounded-full border border-black/40 font-semibold italic text-[10px] transition-colors">
+        Nhân Vật
+      </button>
+      <button @click="showInventory = true" class="relative mx-1 flex h-9 w-9 items-center justify-center rounded-full border border-black/40 font-semibold italic text-[10px] transition-colors">
+        Túi Đồ
+      </button>
+      <button @click="showTechnique = true" class="relative mx-1 flex h-9 w-9 items-center justify-center rounded-full border border-black/40 font-semibold italic text-[10px] transition-colors">
+        Công Pháp
+      </button>
+      <button @click="showEquipment = true" class="relative mx-1 flex h-9 w-9 items-center justify-center rounded-full border border-black/40 font-semibold italic text-[10px] transition-colors">
+        Trang Bị
+      </button>
+      <button @click="showShop = true" class="relative mx-1 flex h-9 w-9 items-center justify-center rounded-full border border-black/40 font-semibold italic text-[10px] transition-colors">
+        Cửa Hàng
+      </button>
+      <button @click="showCrafting = true" class="relative mx-1 flex h-9 w-9 items-center justify-center rounded-full border border-black/40 font-semibold italic text-[10px] transition-colors">
+        Chế Tạo
+      </button>
+      <button @click="showTribulation = true" class="relative mx-1 flex h-9 w-9 items-center justify-center rounded-full border border-black/40 font-semibold italic text-[10px] transition-colors">
+        Thiên Kiếp
+      </button>
+      <button @click="showSect = true" class="relative mx-1 flex h-9 w-9 items-center justify-center rounded-full border border-black/40 font-semibold italic text-[10px] transition-colors">
+        Tông Môn
+      </button>
+      <button @click="showMissions = true" class="relative mx-1 flex h-9 w-9 items-center justify-center rounded-full border border-black/40 font-semibold italic text-[10px] transition-colors">
+        Nhiệm Vụ
       </button>
     </div>
 
@@ -108,9 +113,6 @@ const openAscension = () => {
     <BaseModal v-model="showMissions" title="Bảng Nhiệm Vụ" maxWidth="max-w-3xl">
       <MissionBoardModal />
     </BaseModal>
-
-    <SecretRealmsModal ref="secretRealmsRef" />
-    <AscensionModal ref="ascensionRef" />
   </div>
 </template>
 

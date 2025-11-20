@@ -16,7 +16,11 @@
       
       <!-- Left Column: Game Info & Actions -->
       <div class="lg:col-span-2 space-y-3 sm:space-y-6">
-        
+        <!-- Cultivation Menu Card -->
+        <div class="p-4 sm:p-6  bg-white/90 backdrop-blur-sm shadow-lg">
+          <CultivationMenu />
+        </div>
+
         <!-- Character Info Card -->
         <div class="p-4 sm:p-6  bg-white/90 backdrop-blur-sm shadow-lg">
           <div class="text-center mb-4">
@@ -67,12 +71,6 @@
           <p class="text-center text-sm sm:text-base italic text-gray-600 border-t border-gray-200 pt-3">
             "Đại đạo vô hình, sinh dục thiên địa..."
           </p>
-        </div>
-
-        <!-- Cultivation Menu Card -->
-        <div class="p-4 sm:p-6  bg-white/90 backdrop-blur-sm shadow-lg">
-          <h3 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-center pb-2 border-b border-gray-300">Tu Luyện & Quản Lý</h3>
-          <CultivationMenu />
         </div>
       </div>
 
