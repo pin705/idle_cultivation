@@ -9,6 +9,7 @@ import CraftingModal from './CraftingModal.vue'
 import TribulationModal from './TribulationModal.vue'
 import SectModal from './SectModal.vue'
 import MissionBoardModal from './MissionBoardModal.vue'
+import SecretRealmsModal from './SecretRealmsModal.vue'
 
 const showInventory = ref(false)
 const showCharacter = ref(false)
@@ -19,6 +20,12 @@ const showCrafting = ref(false)
 const showTribulation = ref(false)
 const showSect = ref(false)
 const showMissions = ref(false)
+const showSecretRealms = ref(false)
+
+const secretRealmsRef = ref<InstanceType<typeof SecretRealmsModal> | null>(null)
+const openSecretRealms = () => {
+  secretRealmsRef.value?.open()
+}
 </script>
 
 <template>
@@ -50,6 +57,9 @@ const showMissions = ref(false)
       </button>
       <button @click="showMissions = true" class="px-2 sm:px-3 py-2 sm:py-3 bg-white border border-ink-black hover:bg-gray-100 text-xs sm:text-sm font-bold transition-colors tracking-wide">
         Nhiệm Vụ
+      </button>
+      <button @click="openSecretRealms" class="px-2 sm:px-3 py-2 sm:py-3 bg-gradient-to-r from-purple-700 to-purple-900 text-white border border-purple-900 hover:from-purple-600 hover:to-purple-800 text-xs sm:text-sm font-bold transition-colors tracking-wide">
+        Mật Cảnh
       </button>
     </div>
 
@@ -88,5 +98,8 @@ const showMissions = ref(false)
     <BaseModal v-model="showMissions" title="Bảng Nhiệm Vụ" maxWidth="max-w-3xl">
       <MissionBoardModal />
     </BaseModal>
+
+    <SecretRealmsModal ref="secretRealmsRef" />
   </div>
 </template>
+

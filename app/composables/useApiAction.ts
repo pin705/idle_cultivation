@@ -33,6 +33,10 @@ export type ActionType =
   | 'MISSION_LIST'
   | 'MISSION_ASSIGN'
   | 'MISSION_CLAIM'
+  | 'WORLD_CHECK'
+  | 'REALM_LIST'
+  | 'REALM_ENTER'
+  | 'REALM_COMPLETE'
 
 export function useApiAction() {
   const player = usePlayerStore()

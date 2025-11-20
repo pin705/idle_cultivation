@@ -2,9 +2,10 @@ import { PlayerModel } from '../models/Player'
 import { ItemModel } from '../models/Item'
 import { UserModel } from '../models/User'
 import { SnapshotModel } from '../models/Snapshot'
-import { getElementMultiplier, REALMS, breakthroughCost, calcTechniqueMultiplier, TECHNIQUE_MAP, TECHNIQUES, calcEquipmentBonus, SHOP_CATALOG, priceWithSoftCap } from '../../shared/constants'
+import { getElementMultiplier, REALMS, breakthroughCost, calcTechniqueMultiplier, TECHNIQUE_MAP, TECHNIQUES, calcEquipmentBonus, SHOP_CATALOG, priceWithSoftCap, WORLD_CYCLES, selectRandomCycle, WORLD_EVENTS } from '../../shared/constants'
 import { rateLimit } from '../utils/rateLimit'
 import { SectModel } from '../models/Sect'
+import { SecretRealmModel } from '../models/SecretRealm'
 
 export default defineEventHandler(async (event) => {
     const body = await readBody(event)
@@ -179,11 +180,31 @@ export default defineEventHandler(async (event) => {
                 const dtSeconds = (tickNow.getTime() - lastUpdate.getTime()) / 1000
                 
                 if (dtSeconds > 0) {
-                    // Calculate qi gain
+                    // Calculate qi gain with all multipliers
                     const mult = getElementMultiplier(player.cultivation.element, player.world.element)
                     const tech = calcTechniqueMultiplier(player.cultivation.activeTechnique, player.techniques?.equippedPassives || [])
                     const eq = calcEquipmentBonus(player.equipment || [])
-                    const rate = (player.cultivation.baseRate * mult * tech.mult * eq.mult) + (tech.add || 0) + (eq.add || 0)
+                    
+                    // World cycle multiplier
+                    let cycleMult = 1.0
+                    if (player.world?.currentCycle && player.world.currentCycle in WORLD_CYCLES) {
+                        cycleMult = WORLD_CYCLES[player.world.currentCycle as keyof typeof WORLD_CYCLES].effect.qiMult || 1.0
+                    }
+                    
+                    // World event multiplier
+                    let eventMult = 1.0
+                    let eventAdd = 0
+                    if (player.world?.activeEvent?.type && player.world.activeEvent.type in WORLD_EVENTS) {
+                        const now = Date.now()
+                        const eventEnds = player.world.activeEvent.endsAt ? new Date(player.world.activeEvent.endsAt).getTime() : 0
+                        if (now < eventEnds) {
+                            const eventDef = WORLD_EVENTS[player.world.activeEvent.type as keyof typeof WORLD_EVENTS]
+                            eventMult = eventDef.effect.qiMult || 1.0
+                            eventAdd = eventDef.effect.qiAdd || 0
+                        }
+                    }
+                    
+                    const rate = ((player.cultivation.baseRate * mult * tech.mult * eq.mult * cycleMult * eventMult) + (tech.add || 0) + (eq.add || 0) + eventAdd)
                     const qiGain = Math.floor(dtSeconds * rate)
                     
                     player.attributes.qi = (player.attributes.qi || 0) + qiGain
@@ -608,6 +629,153 @@ export default defineEventHandler(async (event) => {
                 } else {
                     return { success: false, message: 'Ô trang bị không hợp lệ' }
                 }
+                log = message
+                break
+            }
+
+            // World 3.0: World Cycle & Events
+            case 'WORLD_CHECK': {
+                // Check and update world cycle
+                const now = Date.now()
+                if (!player.world) {
+                    player.world = { element: 'metal', cycleTimer: 0, cycleDuration: 10, currentCycle: 'normal', cycleEndsAt: new Date(now + 300000), activeEvent: { type: null, endsAt: null } }
+                }
+                
+                // Check if cycle expired
+                if (player.world.cycleEndsAt && now >= new Date(player.world.cycleEndsAt).getTime()) {
+                    const newCycle = selectRandomCycle()
+                    player.world.currentCycle = newCycle
+                    player.world.cycleEndsAt = new Date(now + WORLD_CYCLES[newCycle].duration * 1000)
+                    message = `Thiên địa biến hóa: ${WORLD_CYCLES[newCycle].name}!`
+                    log = message
+                }
+                
+                // Check for random world event (5% chance per check, max once per hour)
+                if (!player.world.activeEvent?.type || (player.world.activeEvent.endsAt && now >= new Date(player.world.activeEvent.endsAt).getTime())) {
+                    // Event ended or no active event
+                    if (player.world.activeEvent?.type && player.world.activeEvent.type in WORLD_EVENTS) {
+                        message = `Sự kiện "${WORLD_EVENTS[player.world.activeEvent.type as keyof typeof WORLD_EVENTS].name}" đã kết thúc.`
+                        log = message
+                    }
+                    player.world.activeEvent = { type: null, endsAt: null }
+                    
+                    // Roll for new event
+                    if (Math.random() < 0.05) { // 5% per check
+                        const events = Object.keys(WORLD_EVENTS) as Array<keyof typeof WORLD_EVENTS>
+                        const weights = events.map(k => WORLD_EVENTS[k].rarity)
+                        const total = weights.reduce((a, b) => a + b, 0)
+                        const roll = Math.random() * total
+                        let cumulative = 0
+                        for (let i = 0; i < events.length; i++) {
+                            cumulative += weights[i]
+                            if (roll < cumulative) {
+                                const eventKey = events[i]
+                                const eventDef = WORLD_EVENTS[eventKey]
+                                player.world.activeEvent = {
+                                    type: eventKey,
+                                    endsAt: new Date(now + eventDef.duration * 1000)
+                                }
+                                message = `🌟 Sự kiện: ${eventDef.name}! ${eventDef.description}`
+                                log = message
+                                break
+                            }
+                        }
+                    }
+                }
+                
+                break
+            }
+
+            // World 3.0: Secret Realms
+            case 'REALM_LIST': {
+                // Reset daily tickets if needed
+                const now = new Date()
+                const lastReset = player.secretRealms?.lastTicketReset ? new Date(player.secretRealms.lastTicketReset) : new Date(0)
+                const hoursSinceReset = (now.getTime() - lastReset.getTime()) / (1000 * 60 * 60)
+                
+                if (!player.secretRealms) {
+                    player.secretRealms = { tickets: 3, activeRun: { realmKey: null, startedAt: null, endsAt: null }, completed: [], lastTicketReset: now }
+                } else if (hoursSinceReset >= 24) {
+                    player.secretRealms.tickets = 3
+                    player.secretRealms.lastTicketReset = now
+                }
+                
+                const realms = await SecretRealmModel.find()
+                return { success: true, message: 'Danh sách Mật Cảnh', data: { realms, tickets: player.secretRealms.tickets, activeRun: player.secretRealms.activeRun } }
+            }
+
+            case 'REALM_ENTER': {
+                const { realmKey } = payload || {}
+                if (!realmKey) return { success: false, message: 'Thiếu mã Mật Cảnh' }
+                
+                const realm = await SecretRealmModel.findOne({ key: realmKey })
+                if (!realm) return { success: false, message: 'Mật Cảnh không tồn tại' }
+                
+                if (!player.secretRealms) player.secretRealms = { tickets: 3, activeRun: { realmKey: null, startedAt: null, endsAt: null }, completed: [], lastTicketReset: new Date() }
+                if (player.secretRealms.tickets < realm.ticketCost) return { success: false, message: 'Không đủ vé Mật Cảnh' }
+                if (player.secretRealms.activeRun?.realmKey) return { success: false, message: 'Đang trong một Mật Cảnh khác' }
+                
+                // Check requirements
+                const realmIndex = REALMS.indexOf(player.realm.major as any)
+                const minIndex = REALMS.indexOf(realm.requirements.minRealm as any)
+                if (realmIndex < minIndex) return { success: false, message: `Yêu cầu cảnh giới tối thiểu ${realm.requirements.minRealm}` }
+                if (player.attributes.qi < realm.requirements.minQi) return { success: false, message: `Yêu cầu ${realm.requirements.minQi} linh khí` }
+                
+                player.secretRealms.tickets -= realm.ticketCost
+                const now = Date.now()
+                player.secretRealms.activeRun = {
+                    realmKey: realm.key,
+                    startedAt: new Date(now),
+                    endsAt: new Date(now + realm.duration * 1000)
+                }
+                
+                message = `Bước vào ${realm.name}...`
+                log = message
+                break
+            }
+
+            case 'REALM_COMPLETE': {
+                if (!player.secretRealms?.activeRun?.realmKey) return { success: false, message: 'Không có Mật Cảnh đang chạy' }
+                
+                const now = Date.now()
+                const endsAt = new Date(player.secretRealms.activeRun.endsAt).getTime()
+                if (now < endsAt) return { success: false, message: 'Chưa hoàn thành Mật Cảnh' }
+                
+                const realm = await SecretRealmModel.findOne({ key: player.secretRealms.activeRun.realmKey })
+                if (!realm) return { success: false, message: 'Mật Cảnh không tồn tại' }
+                
+                // Calculate rewards
+                const qiReward = Math.floor(Math.random() * (realm.rewards.qi.max - realm.rewards.qi.min + 1)) + realm.rewards.qi.min
+                const stonesReward = Math.floor(Math.random() * (realm.rewards.spiritStones.max - realm.rewards.spiritStones.min + 1)) + realm.rewards.spiritStones.min
+                const herbsReward = Math.floor(Math.random() * (realm.rewards.herbs.max - realm.rewards.herbs.min + 1)) + realm.rewards.herbs.min
+                
+                player.attributes.qi += qiReward
+                player.resources.spiritStones = (player.resources.spiritStones || 0) + stonesReward
+                player.resources.herbs = (player.resources.herbs || 0) + herbsReward
+                
+                // Roll loot table
+                const lootItems: string[] = []
+                for (const loot of realm.lootTable || []) {
+                    if (Math.random() < loot.dropRate) {
+                        const qty = Math.floor(Math.random() * ((loot.quantity?.max || 1) - (loot.quantity?.min || 1) + 1)) + (loot.quantity?.min || 1)
+                        let item = await ItemModel.findOne({ name: loot.itemName })
+                        if (!item) {
+                            item = await ItemModel.create({ name: loot.itemName, type: loot.itemType, isStackable: loot.itemType === 'material' })
+                        }
+                        const idx = player.inventory.findIndex((i: any) => i.itemId && i.itemId.toString() === item!._id.toString())
+                        if (idx >= 0) player.inventory[idx].count += qty
+                        else player.inventory.push({ itemId: item._id, count: qty, uid: `inv_${Date.now()}_${Math.random()}` })
+                        lootItems.push(`${loot.itemName} x${qty}`)
+                    }
+                }
+                
+                // Mark completed
+                if (!player.secretRealms.completed.includes(realm.key)) {
+                    player.secretRealms.completed.push(realm.key)
+                }
+                player.secretRealms.activeRun = { realmKey: null, startedAt: null, endsAt: null }
+                
+                message = `Hoàn thành ${realm.name}! Nhận: ${qiReward} Qi, ${stonesReward} Linh Thạch, ${herbsReward} Thảo Dược${lootItems.length > 0 ? ', ' + lootItems.join(', ') : ''}`
                 log = message
                 break
             }

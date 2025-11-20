@@ -31,6 +31,17 @@ const PlayerSchema = new mongoose.Schema({
         baseRate: Number,
         element: String,
     },
+    world: {
+        element: { type: String, default: 'metal' },
+        cycleTimer: { type: Number, default: 0 },
+        cycleDuration: { type: Number, default: 10 },
+        currentCycle: { type: String, enum: ['normal', 'eclipse', 'harmony', 'chaos'], default: 'normal' },
+        cycleEndsAt: { type: Date, default: null },
+        activeEvent: {
+            type: { type: String, enum: ['meteor_shower', 'spirit_tide', 'cosmic_resonance', null], default: null },
+            endsAt: { type: Date, default: null }
+        }
+    },
     logs: [{ type: String }],
         techniques: {
             unlocked: [String],
@@ -58,6 +69,16 @@ const PlayerSchema = new mongoose.Schema({
             reward: mongoose.Schema.Types.Mixed,
             claimed: { type: Boolean, default: false }
         }],
+        secretRealms: {
+            tickets: { type: Number, default: 3 }, // Daily tickets
+            activeRun: {
+                realmKey: { type: String, default: null },
+                startedAt: { type: Date, default: null },
+                endsAt: { type: Date, default: null }
+            },
+            completed: [String], // keys of completed realms
+            lastTicketReset: { type: Date, default: Date.now }
+        },
         updatedAt: { type: Date, default: Date.now }
 })
 

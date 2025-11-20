@@ -134,3 +134,105 @@ export function priceWithSoftCap(base: number, purchasedCount: number) {
   // 10% increase per previous purchase, capped at 2x
   return Math.min(Math.floor(base * Math.pow(1.1, purchasedCount)), base * 2)
 }
+
+// World 3.0: Dynamic World Cycles
+export type WorldCycle = 'normal' | 'eclipse' | 'harmony' | 'chaos'
+
+export interface WorldCycleDef {
+  id: WorldCycle
+  name: string
+  duration: number // seconds
+  effect: {
+    qiMult?: number
+    spiritStonesMult?: number
+    dropRateMult?: number
+  }
+  rarity: number // 0-1, chance to occur
+}
+
+export const WORLD_CYCLES: Record<WorldCycle, WorldCycleDef> = {
+  normal: {
+    id: 'normal',
+    name: 'Bình Thường',
+    duration: 300, // 5 minutes
+    effect: { qiMult: 1.0 },
+    rarity: 0.7 // 70% chance
+  },
+  eclipse: {
+    id: 'eclipse',
+    name: 'Nhật Thực',
+    duration: 120, // 2 minutes
+    effect: { qiMult: 0.5, dropRateMult: 2.0 },
+    rarity: 0.1 // 10% chance
+  },
+  harmony: {
+    id: 'harmony',
+    name: 'Ngũ Hành Hòa Hợp',
+    duration: 180, // 3 minutes
+    effect: { qiMult: 2.0, spiritStonesMult: 1.5 },
+    rarity: 0.15 // 15% chance
+  },
+  chaos: {
+    id: 'chaos',
+    name: 'Hỗn Loạn Thiên Địa',
+    duration: 90, // 1.5 minutes
+    effect: { qiMult: 3.0, dropRateMult: 3.0 },
+    rarity: 0.05 // 5% chance - very rare
+  }
+}
+
+export function selectRandomCycle(): WorldCycle {
+  const roll = Math.random()
+  let cumulative = 0
+  const cycles: WorldCycle[] = ['chaos', 'harmony', 'eclipse', 'normal']
+  for (const cycle of cycles) {
+    cumulative += WORLD_CYCLES[cycle].rarity
+    if (roll < cumulative) return cycle
+  }
+  return 'normal'
+}
+
+// World 3.0: World Events
+export type WorldEventType = 'meteor_shower' | 'spirit_tide' | 'cosmic_resonance'
+
+export interface WorldEventDef {
+  id: WorldEventType
+  name: string
+  description: string
+  duration: number // seconds
+  effect: {
+    qiMult?: number
+    qiAdd?: number
+    spiritStonesReward?: number
+    specialItem?: string
+  }
+  rarity: number // chance per hour (0-1)
+}
+
+export const WORLD_EVENTS: Record<WorldEventType, WorldEventDef> = {
+  meteor_shower: {
+    id: 'meteor_shower',
+    name: 'Khoáng Thạch Sao Băng',
+    description: 'Từ bầu trời cao rơi xuống vô số thiên thạch chứa linh khí',
+    duration: 60, // 1 minute
+    effect: { qiMult: 5.0, spiritStonesReward: 100 },
+    rarity: 0.05 // 5% per hour
+  },
+  spirit_tide: {
+    id: 'spirit_tide',
+    name: 'Thủy Triều Linh Lực',
+    description: 'Linh khí thiên địa dâng trào như sóng thủy triều',
+    duration: 120, // 2 minutes
+    effect: { qiMult: 3.0, qiAdd: 50 },
+    rarity: 0.08 // 8% per hour
+  },
+  cosmic_resonance: {
+    id: 'cosmic_resonance',
+    name: 'Vũ Trụ Cộng Hưởng',
+    description: 'Thiên địa vạn vật cộng hưởng, đại đạo hiển lộ',
+    duration: 180, // 3 minutes
+    effect: { qiMult: 4.0, specialItem: 'dao_insight_token' },
+    rarity: 0.03 // 3% per hour
+  }
+}
+

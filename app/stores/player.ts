@@ -32,6 +32,12 @@ export const usePlayerStore = defineStore('player', {
             element: 'none', // Current world element
             cycleTimer: 0,
             cycleDuration: 10, // 10 seconds per element for testing
+            currentCycle: 'normal' as any,
+            cycleEndsAt: null as any,
+            activeEvent: {
+                type: null as any,
+                endsAt: null as any
+            }
         },
         logs: [] as string[],
         tribulation: { active: false, difficulty: 1, endsAt: null as any, buff: 0 } as any,
@@ -42,6 +48,16 @@ export const usePlayerStore = defineStore('player', {
             message: '',
             offlineTime: 0,
             qiGained: 0
+        },
+        secretRealms: {
+            tickets: 3,
+            activeRun: {
+                realmKey: null as any,
+                startedAt: null as any,
+                endsAt: null as any
+            },
+            completed: [] as string[],
+            lastTicketReset: null as any
         }
     }),
 

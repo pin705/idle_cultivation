@@ -34,6 +34,16 @@
             <div class="w-full bg-gray-300 h-1.5 sm:h-2 overflow-hidden">
                <div class="bg-gray-600 h-full transition-all duration-1000 ease-linear" :style="{ width: (player.world.cycleTimer / player.world.cycleDuration * 100) + '%' }"></div>
             </div>
+            
+            <!-- World Cycle Indicator -->
+            <div v-if="player.world.currentCycle && player.world.currentCycle !== 'normal'" class="mt-2 p-2 bg-purple-50 border border-purple-300 text-xs sm:text-sm">
+              <span class="font-bold text-purple-700">{{ getWorldCycleName(player.world.currentCycle) }}</span>
+            </div>
+            
+            <!-- World Event Indicator -->
+            <div v-if="player.world.activeEvent?.type" class="mt-2 p-2 bg-yellow-50 border border-yellow-400 text-xs sm:text-sm animate-pulse">
+              <span class="font-bold text-yellow-700">🌟 {{ getWorldEventName(player.world.activeEvent.type) }}</span>
+            </div>
           </div>
 
           <div class="mb-4">
@@ -123,13 +133,21 @@ onMounted(async () => {
 // Auto-save every 5 seconds
 let saveInterval: any
 let tickInterval: any
+let worldCheckInterval: any
 onMounted(() => {
-  // Server tick every 1 second for accurate cultivation
+  // Server tick every 5 seconds for accurate cultivation
   tickInterval = setInterval(() => {
     if (loggedIn.value) {
       player.serverTick()
     }
   }, 5000)
+  
+  // World cycle check every 60 seconds
+  worldCheckInterval = setInterval(() => {
+    if (loggedIn.value) {
+      call('WORLD_CHECK')
+    }
+  }, 60000)
   
   // Auto-save every 5 seconds
   // saveInterval = setInterval(() => {
@@ -141,6 +159,7 @@ onMounted(() => {
 onUnmounted(() => {
   if (tickInterval) clearInterval(tickInterval)
   if (saveInterval) clearInterval(saveInterval)
+  if (worldCheckInterval) clearInterval(worldCheckInterval)
 })
 
 // Start game loop
@@ -165,5 +184,24 @@ const getElementColor = (el: string) => {
     none: 'text-gray-400'
   }
   return colors[el] || 'text-black'
+}
+
+const getWorldCycleName = (cycle: string) => {
+  const names: Record<string, string> = {
+    normal: 'Bình Thường',
+    eclipse: 'Nhật Thực',
+    harmony: 'Ngũ Hành Hòa Hợp',
+    chaos: 'Hỗn Loạn Thiên Địa'
+  }
+  return names[cycle] || cycle
+}
+
+const getWorldEventName = (eventType: string) => {
+  const names: Record<string, string> = {
+    meteor_shower: 'Khoáng Thạch Sao Băng',
+    spirit_tide: 'Thủy Triều Linh Lực',
+    cosmic_resonance: 'Vũ Trụ Cộng Hưởng'
+  }
+  return names[eventType] || eventType
 }
 </script>
